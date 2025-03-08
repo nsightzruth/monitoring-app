@@ -1,0 +1,455 @@
+:root {
+  /* New color scheme based on the provided image */
+  --primary-color: #0C1945;    /* Dark blue */
+  --secondary-color: #0A7B83;  /* Teal */
+  --tertiary-color: #44BCCC;   /* Light teal */
+  --light-bg: #E5EEF1;         /* Very light blue/gray */
+  --dark-text: #0C1945;        /* Dark blue for text */
+  --light-text: #ffffff;       /* White text for dark backgrounds */
+  --success-color: #44BCCC;    /* Light teal for success */
+  --warning-color: #F9A826;    /* Amber for warnings */
+  --error-color: #F44336;      /* Red for errors */
+  --border-radius: 4px;
+  --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: var(--dark-text);
+  background-color: var(--light-bg);
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+header {
+  background-color: var(--primary-color);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  color: var(--light-text);
+  font-size: 2.2rem;
+  margin: 0;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+section {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 1.5rem;
+}
+
+section h2 {
+  color: var(--secondary-color);
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--tertiary-color);
+}
+
+.form-section {
+  background-color: var(--secondary-color);
+}
+
+.form-section h2 {
+  color: var(--light-text);
+  border-bottom-color: var(--light-text);
+}
+
+.table-section {
+  background-color: white;
+}
+
+/* Form styles */
+.referral-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.inline-form-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.inline-form-group label {
+  flex: 0 0 150px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--light-text);
+}
+
+.inline-form-group input,
+.inline-form-group select,
+.inline-form-group textarea {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-row .inline-form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Remove bottom margin from form groups inside form rows */
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--light-text);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.form-actions {
+  margin-top: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.reset-button {
+  background-color: #808080;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.reset-button:hover {
+  background-color: #666666;
+}
+
+.submit-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.submit-button:hover {
+  background-color: var(--tertiary-color);
+}
+
+.submit-button:disabled {
+  background-color: #b8c2cc;
+  cursor: not-allowed;
+}
+
+.form-section .submit-button {
+  background-color: var(--tertiary-color);
+}
+
+.form-section .submit-button:hover {
+  background-color: var(--primary-color);
+}
+
+.message {
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+}
+
+.message.success {
+  background-color: rgba(42, 157, 143, 0.2);
+  color: var(--success-color);
+  border: 1px solid var(--success-color);
+}
+
+.message.error {
+  background-color: rgba(230, 57, 70, 0.2);
+  color: var(--error-color);
+  border: 1px solid var(--error-color);
+}
+
+/* Table styles */
+.table-container {
+  overflow-x: auto;
+}
+
+.referrals-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.referrals-table th,
+.referrals-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eaedf0;
+}
+
+.referrals-table th {
+  background-color: var(--tertiary-color);
+  font-weight: 600;
+  color: var(--dark-text);
+}
+
+.referrals-table tr:hover {
+  background-color: #f9fafb;
+}
+
+.notes-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.no-notes {
+  color: #b8c2cc;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.new {
+  background-color: var(--tertiary-color);
+  color: var(--primary-color);
+}
+
+.status-badge.in-progress {
+  background-color: var(--secondary-color);
+  color: var(--light-text);
+}
+
+.status-badge.resolved {
+  background-color: var(--primary-color);
+  color: var(--light-text);
+}
+
+.status-badge.closed {
+  background-color: var(--light-bg);
+  color: var(--primary-color);
+}
+
+.no-data {
+  text-align: center;
+  color: #6c757d;
+  padding: 2rem 0;
+}
+
+/* Add these to your App.css file */
+
+/* View mode styles */
+.view-mode-banner {
+  background-color: var(--tertiary-color);
+  color: var(--primary-color);
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Icon button styles */
+.action-cell {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary-color);
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.icon-button:hover {
+  background-color: rgba(10, 123, 131, 0.1);
+  color: var(--primary-color);
+}
+
+.view-button:hover {
+  color: var(--tertiary-color);
+}
+
+.copy-button:hover {
+  color: var(--primary-color);
+}
+
+/* Button styles */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.reset-button {
+  background-color: #808080;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.reset-button:hover {
+  background-color: #666666;
+}
+
+/* Make sure form labels are left-aligned */
+.inline-form-group label {
+  text-align: left;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  main {
+    flex-direction: column;
+  }
+  
+  .form-section {
+    width: 100%;
+  }
+  
+  .table-section {
+    width: 100%;
+  }
+}
+
+.action-cell {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary-color);
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.icon-button:hover {
+  background-color: rgba(10, 123, 131, 0.1);
+  color: var(--primary-color);
+}
+
+@media (max-width: 640px) {
+  .form-row {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  
+  .form-row .form-group,
+  .form-row .inline-form-group {
+    margin-bottom: 0;
+  }
+  
+  .inline-form-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .inline-form-group label {
+    flex: 0 0 auto;
+    text-align: left;
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+  
+  .inline-form-group input,
+  .inline-form-group select,
+  .inline-form-group textarea {
+    width: 100%;
+  }
+}
