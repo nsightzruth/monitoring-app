@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import ReferralForm from './components/ReferralForm';
 import ReferralsTable from './components/ReferralsTable';
+import Auth from './components/Auth';
 import './App.css';
 
 // Initialize Supabase client
@@ -142,19 +143,45 @@ function App() {
         alert('Failed to copy notes. Please try again.');
       });
   };
+  
+  // Function to handle user logout
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+      setReferrals([]);
+      setCurrentReferral(null);
+    } catch (err) {
+      console.error('Error logging out:', err);
+      alert('Failed to log out. Please try again.');
+    }
+  };
 
   return (
     <div className="app-container">
       <header>
-        <h1>Student Referral System</h1>
+        <h1>Intervention Monitoring App</h1>
+        {user && (
+          <div className="header-actions">
+            <button onClick={handleLogout} className="logout-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Logout
+            </button>
+          </div>
+        )}
       </header>
       
       <main>
         {!user ? (
-          <section>
-            <h2>Login Required</h2>
-            <p>Please log in to use the referral system.</p>
-            {/* Add your Auth component here */}
+          <section className="auth-section">
+            <h2>Login Here</h2>
+            <p>Please log in to use the Intervention Monitoring App.</p>
+            <Auth onLogin={setUser} />
           </section>
         ) : (
           <>

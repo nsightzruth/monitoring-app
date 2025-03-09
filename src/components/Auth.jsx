@@ -13,6 +13,12 @@ const Auth = ({ onLogin }) => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
@@ -24,8 +30,12 @@ const Auth = ({ onLogin }) => {
 
       if (error) throw error;
       
-      onLogin(data.user);
+      console.log("Login successful:", data.user);
+      if (onLogin) {
+        onLogin(data.user);
+      }
     } catch (error) {
+      console.error('Error logging in:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -34,8 +44,8 @@ const Auth = ({ onLogin }) => {
 
   return (
     <div className="auth-container">
-      <h2>Teacher Login</h2>
       {error && <div className="message error">{error}</div>}
+      
       <form onSubmit={handleLogin} className="auth-form">
         <div className="form-group">
           <label htmlFor="email">Email</label>
@@ -44,9 +54,12 @@ const Auth = ({ onLogin }) => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+            disabled={loading}
             required
           />
         </div>
+        
         <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
@@ -54,12 +67,17 @@ const Auth = ({ onLogin }) => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            disabled={loading}
             required
           />
         </div>
-        <button type="submit" disabled={loading} className="submit-button">
-          {loading ? 'Loading...' : 'Login'}
-        </button>
+        
+        <div className="form-actions login-actions">
+          <button type="submit" disabled={loading} className="submit-button login-button">
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </div>
       </form>
     </div>
   );
