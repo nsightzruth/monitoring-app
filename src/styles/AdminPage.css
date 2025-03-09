@@ -1,0 +1,275 @@
+/* src/styles/AdminPage.css */
+
+.admin-section {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .admin-section h2 {
+    color: var(--secondary-color);
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--tertiary-color);
+  }
+  
+  .admin-container {
+    display: flex;
+    gap: 2rem;
+  }
+  
+  /* Sidebar styles */
+  .admin-sidebar {
+    flex: 0 0 200px;
+    background-color: var(--light-bg);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+  }
+  
+  .admin-navigation {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .admin-navigation li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .admin-navigation button {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    color: var(--dark-text);
+  }
+  
+  .admin-navigation button:hover {
+    background-color: rgba(10, 123, 131, 0.1);
+  }
+  
+  .admin-navigation button.active {
+    background-color: var(--secondary-color);
+    color: white;
+  }
+  
+  /* Content area */
+  .admin-content {
+    flex: 1;
+  }
+  
+  /* List view styles */
+  .admin-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eaedf0;
+  }
+  
+  .admin-toolbar h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--primary-color);
+  }
+  
+  .add-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .add-button:hover {
+    background-color: var(--tertiary-color);
+  }
+  
+  /* Table styles */
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  
+  .admin-table th,
+  .admin-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eaedf0;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .admin-table th {
+    background-color: var(--tertiary-color);
+    font-weight: 600;
+    color: var(--dark-text);
+  }
+  
+  .admin-table tr:hover {
+    background-color: #f9fafb;
+  }
+  
+  .action-cell {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-start;
+  }
+  
+  /* Icon button styles */
+  .icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--secondary-color);
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  
+  .icon-button:hover {
+    background-color: rgba(10, 123, 131, 0.1);
+  }
+  
+  .edit-button:hover {
+    color: var(--primary-color);
+  }
+  
+  .delete-button:hover {
+    color: var(--error-color);
+  }
+  
+  /* Form view styles */
+  .admin-form-view {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+  }
+  
+  .admin-form-view h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eaedf0;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .form-group label {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: border-color 0.3s;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .cancel-button {
+    background-color: #808080;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.3s;
+  }
+  
+  .cancel-button:hover {
+    background-color: #666666;
+  }
+  
+  .submit-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.3s;
+  }
+  
+  .submit-button:hover {
+    background-color: var(--tertiary-color);
+  }
+  
+  .submit-button:disabled,
+  .cancel-button:disabled {
+    background-color: #b8c2cc;
+    cursor: not-allowed;
+  }
+  
+  .error-message {
+    background-color: rgba(230, 57, 70, 0.2);
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+    padding: 0.75rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .admin-container {
+      flex-direction: column;
+    }
+    
+    .admin-sidebar {
+      flex: 0 0 auto;
+    }
+  }

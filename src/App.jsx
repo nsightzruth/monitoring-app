@@ -1,7 +1,9 @@
+// src/App.jsx
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import AuthPage from './pages/AuthPage';
 import ReferralPage from './pages/ReferralPage';
+import AdminPage from './pages/AdminPage';
 import './styles/App.css';
 
 // Initialize Supabase client
@@ -11,6 +13,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 function App() {
   const [user, setUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState('referrals');
 
   // Check user auth status
   useEffect(() => {
@@ -49,12 +52,45 @@ function App() {
     }
   };
 
+  // Navigation handler
+  const handleNavigation = (page) => {
+    setCurrentPage(page);
+  };
+
+  const renderContent = () => {
+    if (!user) {
+      return <AuthPage onLogin={setUser} />;
+    }
+
+    switch (currentPage) {
+      case 'admin':
+        return <AdminPage user={user} supabase={supabase} />;
+      case 'referrals':
+      default:
+        return <ReferralPage user={user} supabase={supabase} />;
+    }
+  };
+
   return (
     <div className="app-container">
       <header>
         <h1>Intervention Monitoring App</h1>
         {user && (
           <div className="header-actions">
+            <nav className="main-nav">
+              <button 
+                className={`nav-link ${currentPage === 'referrals' ? 'active' : ''}`}
+                onClick={() => handleNavigation('referrals')}
+              >
+                Referrals
+              </button>
+              <button 
+                className={`nav-link ${currentPage === 'admin' ? 'active' : ''}`}
+                onClick={() => handleNavigation('admin')}
+              >
+                Admin
+              </button>
+            </nav>
             <button onClick={handleLogout} className="logout-button">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -68,11 +104,7 @@ function App() {
       </header>
       
       <main>
-        {!user ? (
-          <AuthPage onLogin={setUser} />
-        ) : (
-          <ReferralPage user={user} supabase={supabase} />
-        )}
+        {renderContent()}
       </main>
     </div>
   );
