@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import AuthPage from './pages/AuthPage';
 import ReferralPage from './pages/ReferralPage';
 import AdminPage from './pages/AdminPage';
+import TeamDashboard from './pages/TeamDashboard';
 import Navigation from './components/Navigation';
 import './styles/App.css';
 
@@ -65,6 +66,8 @@ function App() {
     switch (currentPage) {
       case 'admin':
         return <AdminPage user={user} supabase={supabase} />;
+      case 'teams':
+        return <TeamDashboard user={user} supabase={supabase} />;
       case 'referrals':
       default:
         return <ReferralPage user={user} supabase={supabase} />;
