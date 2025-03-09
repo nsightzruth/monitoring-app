@@ -1,5 +1,5 @@
-// File: src/components/ReferralsTable.jsx
 import { format } from 'date-fns';
+import '../styles/ReferralsTable.css';
 
 const ReferralsTable = ({ referrals, onView, onCopyNote }) => {
   if (!referrals || referrals.length === 0) {
@@ -17,14 +17,12 @@ const ReferralsTable = ({ referrals, onView, onCopyNote }) => {
   };
 
   const handleView = (referral) => {
-    console.log("View button clicked for referral:", referral.id);
     if (onView) {
       onView(referral);
     }
   };
 
   const handleCopyNote = (notes) => {
-    console.log("Copy button clicked for notes");
     if (onCopyNote) {
       onCopyNote(notes);
     }

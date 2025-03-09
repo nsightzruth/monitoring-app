@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import '../styles/Auth.css';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -73,8 +74,8 @@ const Auth = ({ onLogin }) => {
           />
         </div>
         
-        <div className="form-actions login-actions">
-          <button type="submit" disabled={loading} className="submit-button login-button">
+        <div className="form-actions">
+          <button type="submit" disabled={loading} className="submit-button">
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </div>

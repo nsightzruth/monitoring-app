@@ -1,0 +1,111 @@
+:root {
+  /* Color scheme based on the provided image */
+  --primary-color: #0C1945;    /* Dark blue */
+  --secondary-color: #0A7B83;  /* Teal */
+  --tertiary-color: #44BCCC;   /* Light teal */
+  --light-bg: #E5EEF1;         /* Very light blue/gray */
+  --dark-text: #0C1945;        /* Dark blue for text */
+  --light-text: #ffffff;       /* White text for dark backgrounds */
+  --success-color: #44BCCC;    /* Light teal for success */
+  --warning-color: #F9A826;    /* Amber for warnings */
+  --error-color: #F44336;      /* Red for errors */
+  --border-radius: 4px;
+  --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: var(--dark-text);
+  background-color: var(--light-bg);
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+header {
+  text-align: center;
+  background-color: var(--primary-color);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+header h1 {
+  color: var(--light-text);
+  font-size: 2.2rem;
+  margin: 0;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+section {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 1.5rem;
+}
+
+section h2 {
+  color: var(--secondary-color);
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--tertiary-color);
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background-color: var(--tertiary-color);
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  main {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-row {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import '../styles/ReferralForm.css';
 
 const REFERRAL_TYPES = [
   'Academic Concern',
@@ -29,7 +30,6 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
 
   // Update form when referralToView changes
   useEffect(() => {
-    console.log("referralToView changed:", referralToView);
     if (referralToView) {
       setFormData({
         studentName: referralToView.student_name || '',
@@ -87,7 +87,6 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
   };
 
   const handleReset = () => {
-    console.log("Reset button clicked");
     setFormData({
       studentName: '',
       referralType: REFERRAL_TYPES[0],
