@@ -1,5 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import '../styles/ReferralForm.css';
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const REFERRAL_TYPES = [
   'Academic Concern',
@@ -27,9 +33,23 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [viewMode, setViewMode] = useState(false);
+  
+  // Student autocomplete states
+  const [studentSuggestions, setStudentSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [validStudent, setValidStudent] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  
+  // Refs for handling clicks outside the suggestion box
+  const suggestionsRef = useRef(null);
+  const inputRef = useRef(null);
+  
+  // Timeout for debouncing search
+  const searchTimeout = useRef(null);
 
   // Update form when referralToView changes
   useEffect(() => {
+    console.log("referralToView changed:", referralToView);
     if (referralToView) {
       setFormData({
         studentName: referralToView.student_name || '',
@@ -38,17 +58,112 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
         referralNotes: referralToView.referral_notes || ''
       });
       setViewMode(true);
+      setValidStudent(true);
     } else {
       setViewMode(false);
+      setValidStudent(false);
     }
   }, [referralToView]);
 
+  // Handle outside clicks to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionsRef.current && 
+        !suggestionsRef.current.contains(event.target) &&
+        inputRef.current && 
+        !inputRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Search for students when name input changes
+  useEffect(() => {
+    // Only search if not in view mode and input is at least 3 characters
+    if (!viewMode && formData.studentName.length >= 3) {
+      // Clear any existing timeout
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+      
+      // Debounce the search
+      searchTimeout.current = setTimeout(() => {
+        searchStudents(formData.studentName);
+      }, 300);
+    } else {
+      setStudentSuggestions([]);
+      setShowSuggestions(false);
+    }
+    
+    // Clean up timeout on component unmount
+    return () => {
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+    };
+  }, [formData.studentName, viewMode]);
+
+  const searchStudents = async (query) => {
+    if (query.length < 3) return;
+    
+    try {
+      setIsSearching(true);
+      
+      // Search for students with names containing the query string
+      const { data, error } = await supabase
+        .from('Student')
+        .select('id, name')
+        .ilike('name', `%${query}%`)
+        .order('name')
+        .limit(10);
+      
+      if (error) throw error;
+      
+      console.log("Found students:", data);
+      setStudentSuggestions(data || []);
+      setShowSuggestions(data && data.length > 0);
+      
+      // Check if the exact name exists in the results
+      const exactMatch = data?.some(student => 
+        student.name.toLowerCase() === query.toLowerCase()
+      );
+      setValidStudent(exactMatch);
+      
+    } catch (err) {
+      console.error("Error searching students:", err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'studentName') {
+      // For student name, update validation state too
+      setValidStudent(false);
+    }
+    
     setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleStudentSelect = (studentName) => {
+    setFormData((prev) => ({
+      ...prev,
+      studentName
+    }));
+    setValidStudent(true);
+    setShowSuggestions(false);
   };
 
   const handleSubmit = async (e) => {
@@ -57,6 +172,12 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
     // Form validation
     if (!formData.studentName.trim()) {
       setMessage({ text: 'Student name is required', type: 'error' });
+      return;
+    }
+    
+    // Validate that the student exists in the database
+    if (!validStudent) {
+      setMessage({ text: 'Please select a valid student from the suggestions', type: 'error' });
       return;
     }
     
@@ -75,6 +196,7 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
           referralNotes: ''
         });
         setMessage({ text: 'Referral submitted successfully!', type: 'success' });
+        setValidStudent(false);
       } else {
         setMessage({ text: result.error || 'Failed to submit referral', type: 'error' });
       }
@@ -87,6 +209,7 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
   };
 
   const handleReset = () => {
+    console.log("Reset button clicked");
     setFormData({
       studentName: '',
       referralType: REFERRAL_TYPES[0],
@@ -95,6 +218,7 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
     });
     setMessage({ text: '', type: '' });
     setViewMode(false);
+    setValidStudent(false);
     if (onReset) {
       onReset();
     }
@@ -116,16 +240,39 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
       
       <div className="inline-form-group">
         <label htmlFor="studentName">Student Name:</label>
-        <input
-          type="text"
-          id="studentName"
-          name="studentName"
-          value={formData.studentName}
-          onChange={handleChange}
-          placeholder="Enter student's full name"
-          disabled={submitting || viewMode}
-          required
-        />
+        <div className="autocomplete-container">
+          <input
+            type="text"
+            id="studentName"
+            name="studentName"
+            value={formData.studentName}
+            onChange={handleChange}
+            onFocus={() => formData.studentName.length >= 3 && setShowSuggestions(true)}
+            placeholder="Enter student's full name (min 3 characters)"
+            disabled={submitting || viewMode}
+            required
+            ref={inputRef}
+            className={!formData.studentName || validStudent ? '' : 'invalid-input'}
+          />
+          {isSearching && (
+            <div className="search-indicator">
+              Searching...
+            </div>
+          )}
+          {showSuggestions && studentSuggestions.length > 0 && (
+            <ul className="suggestions-list" ref={suggestionsRef}>
+              {studentSuggestions.map(student => (
+                <li 
+                  key={student.id}
+                  onClick={() => handleStudentSelect(student.name)}
+                  className={formData.studentName === student.name ? 'selected' : ''}
+                >
+                  {student.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
       
       <div className="form-row">
@@ -187,7 +334,7 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
         <button 
           type="submit" 
           className="submit-button" 
-          disabled={submitting || viewMode}
+          disabled={submitting || viewMode || !validStudent}
         >
           {submitting ? 'Submitting...' : 'Submit Referral'}
         </button>
