@@ -179,7 +179,7 @@
     width: 100%;
   }
   
-  .inline-form-group input,
+  .inline-form-group .autocomplete-container,
   .inline-form-group select,
   .inline-form-group textarea {
     width: 100%;

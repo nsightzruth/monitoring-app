@@ -1,9 +1,9 @@
-// src/App.jsx
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import AuthPage from './pages/AuthPage';
 import ReferralPage from './pages/ReferralPage';
 import AdminPage from './pages/AdminPage';
+import Navigation from './components/Navigation';
 import './styles/App.css';
 
 // Initialize Supabase client
@@ -73,35 +73,14 @@ function App() {
 
   return (
     <div className="app-container">
-      <header>
-        <h1>Intervention Monitoring App</h1>
-        {user && (
-          <div className="header-actions">
-            <nav className="main-nav">
-              <button 
-                className={`nav-link ${currentPage === 'referrals' ? 'active' : ''}`}
-                onClick={() => handleNavigation('referrals')}
-              >
-                Referrals
-              </button>
-              <button 
-                className={`nav-link ${currentPage === 'admin' ? 'active' : ''}`}
-                onClick={() => handleNavigation('admin')}
-              >
-                Admin
-              </button>
-            </nav>
-            <button onClick={handleLogout} className="logout-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-              Logout
-            </button>
-          </div>
-        )}
-      </header>
+      {user && (
+        <Navigation 
+          user={user}
+          currentPage={currentPage}
+          onNavigation={handleNavigation}
+          onLogout={handleLogout}
+        />
+      )}
       
       <main>
         {renderContent()}

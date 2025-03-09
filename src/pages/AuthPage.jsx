@@ -3,11 +3,16 @@ import '../styles/AuthPage.css';
 
 const AuthPage = ({ onLogin }) => {
   return (
-    <section className="auth-section">
-      <h2>Login Here</h2>
-      <p>Please log in to use the Intervention Monitoring App.</p>
-      <Auth onLogin={onLogin} />
-    </section>
+    <div className="login-container">
+      <section className="auth-section">
+        <div className="auth-logo">
+          <img src="/nsightz-logo.png" alt="Nsightz Logo" />
+        </div>
+        <h2>Welcome Back</h2>
+        <p>Please log in to continue</p>
+        <Auth onLogin={onLogin} />
+      </section>
+    </div>
   );
 };
 
