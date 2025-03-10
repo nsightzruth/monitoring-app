@@ -5,7 +5,8 @@ const StudentTableRow = ({
   activeMenu, 
   onToggleMenu, 
   onMarkReviewed, 
-  actionLoading 
+  actionLoading,
+  menuRef
 }) => {
   return (
     <tr>
@@ -35,9 +36,9 @@ const StudentTableRow = ({
       <td>{student.referralReason}</td>
       <td>
         <div className="notes-cell">
-          {student.notes ? (
-            student.notes.split('\n\n').map((note, idx) => (
-              <p key={idx}>{note}</p>
+          {student.incidentNotes ? (
+            student.incidentNotes.split('\n').map((note, idx) => (
+              <p key={idx} className="truncate-note" title={note}>{note}</p>
             ))
           ) : (
             <span className="no-notes">No notes available</span>
@@ -63,6 +64,7 @@ const StudentTableRow = ({
           onToggle={onToggleMenu}
           onMarkReviewed={onMarkReviewed}
           isLoading={actionLoading}
+          menuRef={menuRef}
         />
       </td>
     </tr>

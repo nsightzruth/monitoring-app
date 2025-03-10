@@ -168,6 +168,18 @@
     border-bottom: none;
 }
 
+/* Add truncated note styling */
+.truncate-note {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 0 0.25rem 0;
+    padding: 0 0 0.25rem 0;
+    max-width: 300px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
 .no-notes, .no-followups {
     color: #b8c2cc;
     font-style: italic;

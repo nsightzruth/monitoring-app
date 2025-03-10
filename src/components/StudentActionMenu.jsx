@@ -5,28 +5,34 @@ const StudentActionMenu = ({
   isOpen, 
   onToggle, 
   onMarkReviewed, 
-  isLoading 
+  isLoading,
+  menuRef
 }) => {
-  const menuRef = useRef(null);
+  const localMenuRef = useRef(null);
+  
+  // Use menuRef from props if provided, otherwise use local ref
+  const finalMenuRef = menuRef || localMenuRef;
 
-  // Close menu when clicking outside
+  // Close menu when clicking outside if using local ref
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        if (isOpen) {
-          onToggle(null);
+    if (!menuRef) {
+      const handleClickOutside = (event) => {
+        if (finalMenuRef.current && !finalMenuRef.current.contains(event.target)) {
+          if (isOpen) {
+            onToggle(null);
+          }
         }
-      }
-    };
+      };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onToggle]);
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isOpen, onToggle, menuRef]);
 
   return (
-    <div className="menu-container" ref={isOpen ? menuRef : null}>
+    <div className="menu-container" ref={isOpen ? finalMenuRef : null}>
       <button 
         className="menu-button" 
         onClick={() => onToggle(studentId)}

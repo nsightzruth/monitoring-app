@@ -123,6 +123,15 @@ export const useStudentData = (supabase, user, selectedTeam) => {
         
       if (reviewError) throw reviewError;
       
+      // 6. Fetch incidents/notes for all students
+      const { data: incidentsData, error: incidentsError } = await supabase
+        .from('IncidentsNotes')
+        .select('id, student_id, type, location, offense, note, date, time, created_at')
+        .in('student_id', studentIds)
+        .order('date', { ascending: false });
+        
+      if (incidentsError) throw incidentsError;
+      
       // Filter students who have referrals with valid statuses
       const studentsWithValidReferrals = studentsData.filter(student => {
         return referralsData.some(ref => ref.student_id === student.id);
@@ -144,7 +153,45 @@ export const useStudentData = (supabase, user, selectedTeam) => {
           ? latestStatusChange.new_status 
           : (studentReferrals.length > 0 ? studentReferrals[0].status : 'Unknown');
         
-        // Format referral notes with dates
+        // Get incidents/notes for this student
+        const studentIncidents = incidentsData.filter(
+          incident => incident.student_id === student.id
+        );
+        
+        // Format notes with the required structure
+        const formattedNotes = studentIncidents.map(incident => {
+          const noteDate = new Date(incident.date).toISOString().split('T')[0];
+          
+          if (incident.type === 'Incident') {
+            return {
+              date: incident.date,
+              formattedNote: `${noteDate} - ${incident.offense || 'Incident'} at ${incident.location || 'Unknown'}: ${incident.note || ''}`
+            };
+          } else {
+            return {
+              date: incident.date,
+              formattedNote: `${noteDate} - ${incident.note || 'No details provided'}`
+            };
+          }
+        });
+        
+        // If we have fewer than 5 notes and there's a referral note, add it
+        if (formattedNotes.length < 5 && studentReferrals.length > 0 && studentReferrals[0].referral_notes) {
+          const referralDate = new Date(studentReferrals[0].created_at).toISOString().split('T')[0];
+          formattedNotes.push({
+            date: studentReferrals[0].created_at,
+            formattedNote: `${referralDate} - ${studentReferrals[0].referral_notes}`
+          });
+        }
+        
+        // Sort by date (newest first), limit to 5, and join with line breaks
+        const combinedNotes = formattedNotes
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .slice(0, 5)
+          .map(note => note.formattedNote)
+          .join('\n');
+        
+        // Format referral notes with dates (for backward compatibility)
         const notes = studentReferrals.map(ref => {
           const createdDate = new Date(ref.created_at).toISOString().split('T')[0];
           return `${createdDate} - ${ref.referral_notes || 'No notes provided'}`;
@@ -184,7 +231,8 @@ export const useStudentData = (supabase, user, selectedTeam) => {
           status: currentStatus,
           referralType: studentReferrals.length > 0 ? studentReferrals[0].referral_type : 'N/A',
           referralReason: studentReferrals.length > 0 ? studentReferrals[0].referral_reason : 'N/A',
-          notes,
+          notes, // Keep original notes format for backward compatibility
+          incidentNotes: combinedNotes, // New field for the combined incident notes
           followups,
           lastReview: lastReviewDate
         };

@@ -5,7 +5,8 @@ const StudentTable = ({
   activeMenu, 
   onToggleMenu, 
   onMarkReviewed, 
-  actionLoading 
+  actionLoading,
+  menuRef
 }) => {
   return (
     <div className="students-table-container">
@@ -31,6 +32,7 @@ const StudentTable = ({
               onToggleMenu={onToggleMenu}
               onMarkReviewed={onMarkReviewed}
               actionLoading={actionLoading}
+              menuRef={menuRef && activeMenu === student.id ? menuRef : null}
             />
           ))}
         </tbody>
