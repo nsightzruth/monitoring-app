@@ -5,6 +5,7 @@ const StudentTable = ({
   activeMenu, 
   onToggleMenu, 
   onMarkReviewed, 
+  onAddNote,
   actionLoading,
   menuRef
 }) => {
@@ -31,6 +32,7 @@ const StudentTable = ({
               activeMenu={activeMenu}
               onToggleMenu={onToggleMenu}
               onMarkReviewed={onMarkReviewed}
+              onAddNote={onAddNote}
               actionLoading={actionLoading}
               menuRef={menuRef && activeMenu === student.id ? menuRef : null}
             />

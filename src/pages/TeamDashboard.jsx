@@ -1,17 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { useStudentData } from '../hooks/useStudentData';
+import { useStudentData as useTeamStudentData } from '../hooks/useStudentData';
+import { useStudentData } from '../context/StudentDataContext';
 import TeamSelector from '../components/TeamSelector';
 import StudentTable from '../components/StudentTable';
 import '../styles/TeamDashboard.css';
 
-const TeamDashboard = ({ user, supabase }) => {
+const TeamDashboard = ({ user, supabase, onNavigate }) => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [activeMenu, setActiveMenu] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState(null);
   const menuRef = useRef(null);
   
-  const { teams, students, loading, error, fetchStudentData } = useStudentData(
+  // Get context for cross-page communication
+  const { selectStudent } = useStudentData();
+  
+  const { teams, students, loading, error, fetchStudentData } = useTeamStudentData(
     supabase,
     user,
     selectedTeam
@@ -94,6 +98,16 @@ const TeamDashboard = ({ user, supabase }) => {
       setActionLoading(false);
     }
   };
+  
+  const handleAddNote = (student) => {
+    // Store the selected student in context
+    selectStudent(student);
+    
+    // Navigate to incidents page
+    if (onNavigate) {
+      onNavigate('incidents');
+    }
+  };
 
   return (
     <section className="team-dashboard">
@@ -119,6 +133,7 @@ const TeamDashboard = ({ user, supabase }) => {
           activeMenu={activeMenu}
           onToggleMenu={toggleMenu}
           onMarkReviewed={handleMarkReviewed}
+          onAddNote={handleAddNote}
           actionLoading={actionLoading}
           menuRef={menuRef}
         />

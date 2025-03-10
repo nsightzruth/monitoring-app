@@ -4,7 +4,9 @@ const StudentActionMenu = ({
   studentId, 
   isOpen, 
   onToggle, 
-  onMarkReviewed, 
+  onMarkReviewed,
+  onAddNote,
+  student,
   isLoading,
   menuRef
 }) => {
@@ -30,6 +32,13 @@ const StudentActionMenu = ({
       };
     }
   }, [isOpen, onToggle, menuRef]);
+
+  const handleAddNote = () => {
+    if (onAddNote && student) {
+      onAddNote(student);
+      onToggle(null); // Close menu after clicking
+    }
+  };
 
   return (
     <div className="menu-container" ref={isOpen ? finalMenuRef : null}>
@@ -57,6 +66,18 @@ const StudentActionMenu = ({
               <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
             </svg>
             Reviewed today
+          </button>
+          
+          <button 
+            className="menu-item" 
+            onClick={handleAddNote}
+            disabled={isLoading}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Add note
           </button>
         </div>
       )}

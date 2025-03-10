@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { useStudentData } from '../context/StudentDataContext';
 import '../styles/IncidentNoteForm.css';
 
 // Initialize Supabase client
@@ -13,6 +14,9 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
   const today = new Date();
   const formattedDate = today.toISOString().split('T')[0];
   const formattedTime = today.toTimeString().slice(0, 5);
+  
+  // Access student context to get pre-selected student
+  const { selectedStudent, clearSelectedStudent } = useStudentData();
   
   const [formData, setFormData] = useState({
     studentName: '',
@@ -42,6 +46,21 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
   // Timeout for debouncing search
   const searchTimeout = useRef(null);
 
+  // Use pre-selected student if available (from team dashboard)
+  useEffect(() => {
+    if (selectedStudent && !incidentToView) {
+      setFormData(prevData => ({
+        ...prevData,
+        studentName: selectedStudent.name || '',
+        studentId: selectedStudent.id || ''
+      }));
+      setValidStudent(true);
+      
+      // Clear the selected student from context after using it
+      clearSelectedStudent();
+    }
+  }, [selectedStudent, clearSelectedStudent, incidentToView]);
+
   // Update form when incidentToView changes
   useEffect(() => {
     if (incidentToView) {
@@ -59,9 +78,12 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
       setValidStudent(true);
     } else {
       setViewMode(false);
-      setValidStudent(false);
+      // Only reset valid student if it's not prefilled from context
+      if (!selectedStudent) {
+        setValidStudent(false);
+      }
     }
-  }, [incidentToView]);
+  }, [incidentToView, formattedDate, formattedTime, selectedStudent]);
 
   // Handle outside clicks to close suggestions
   useEffect(() => {
@@ -273,7 +295,7 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
             className={!formData.studentName || validStudent ? '' : 'invalid-input'}
           />
           {isSearching && (
-            <div className="search-indicator">studentName
+            <div className="search-indicator">
               Searching...
             </div>
           )}

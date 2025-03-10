@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { StudentDataProvider } from './context/StudentDataContext';
 import AuthPage from './pages/AuthPage';
 import ReferralPage from './pages/ReferralPage';
 import AdminPage from './pages/AdminPage';
 import TeamDashboard from './pages/TeamDashboard';
-import IncidentNotePage from './pages/IncidentNotePage'; // Import the new page
+import IncidentNotePage from './pages/IncidentNotePage';
 import Navigation from './components/Navigation';
 import './styles/App.css';
 
@@ -68,7 +69,7 @@ function App() {
       case 'admin':
         return <AdminPage user={user} supabase={supabase} />;
       case 'teams':
-        return <TeamDashboard user={user} supabase={supabase} />;
+        return <TeamDashboard user={user} supabase={supabase} onNavigate={handleNavigation} />;
       case 'incidents':
         return <IncidentNotePage user={user} supabase={supabase} />;
       case 'referrals':
@@ -78,20 +79,22 @@ function App() {
   };
 
   return (
-    <div className="app-container">
-      {user && (
-        <Navigation 
-          user={user}
-          currentPage={currentPage}
-          onNavigation={handleNavigation}
-          onLogout={handleLogout}
-        />
-      )}
-      
-      <main>
-        {renderContent()}
-      </main>
-    </div>
+    <StudentDataProvider>
+      <div className="app-container">
+        {user && (
+          <Navigation 
+            user={user}
+            currentPage={currentPage}
+            onNavigation={handleNavigation}
+            onLogout={handleLogout}
+          />
+        )}
+        
+        <main>
+          {renderContent()}
+        </main>
+      </div>
+    </StudentDataProvider>
   );
 }
 

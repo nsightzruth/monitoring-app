@@ -4,7 +4,8 @@ const StudentTableRow = ({
   student, 
   activeMenu, 
   onToggleMenu, 
-  onMarkReviewed, 
+  onMarkReviewed,
+  onAddNote,
   actionLoading,
   menuRef
 }) => {
@@ -60,9 +61,11 @@ const StudentTableRow = ({
       <td className="actions-cell">
         <StudentActionMenu 
           studentId={student.id}
+          student={student}
           isOpen={activeMenu === student.id}
           onToggle={onToggleMenu}
           onMarkReviewed={onMarkReviewed}
+          onAddNote={onAddNote}
           isLoading={actionLoading}
           menuRef={menuRef}
         />

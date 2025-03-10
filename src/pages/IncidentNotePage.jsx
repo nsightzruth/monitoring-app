@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useStudentData } from '../context/StudentDataContext';
 import IncidentNoteForm from '../components/IncidentNoteForm';
 import IncidentNotesTable from '../components/IncidentNotesTable';
 import '../styles/IncidentNotePage.css';
@@ -8,6 +9,16 @@ const IncidentNotePage = ({ user, supabase }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentRecord, setCurrentRecord] = useState(null);
+  
+  // Student context is used to check if a student was pre-selected
+  const { selectedStudent } = useStudentData();
+
+  // Scroll to form if a student was selected in another page
+  useEffect(() => {
+    if (selectedStudent) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [selectedStudent]);
 
   // Fetch records on component mount
   useEffect(() => {
@@ -77,8 +88,8 @@ const IncidentNotePage = ({ user, supabase }) => {
         throw error;
       }
       
-    // Update state with the new record
-    if (data && data.length > 0) {
+      // Update state with the new record
+      if (data && data.length > 0) {
         const formattedRecord = {
           ...data[0],
           student_name: data[0].student_name || data[0].Student?.name || 'Unknown Student',
