@@ -26,6 +26,7 @@ const REFERRAL_REASONS = [
 const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
   const [formData, setFormData] = useState({
     studentName: '',
+    studentId: '', // Added studentId field to track the selected student's ID
     referralType: REFERRAL_TYPES[0],
     referralReason: REFERRAL_REASONS[0],
     referralNotes: ''
@@ -53,6 +54,7 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
     if (referralToView) {
       setFormData({
         studentName: referralToView.student_name || '',
+        studentId: referralToView.student_id || '',
         referralType: referralToView.referral_type || REFERRAL_TYPES[0],
         referralReason: referralToView.referral_reason || REFERRAL_REASONS[0],
         referralNotes: referralToView.referral_notes || ''
@@ -157,10 +159,11 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
     }));
   };
 
-  const handleStudentSelect = (studentName) => {
+  const handleStudentSelect = (studentName, studentId) => {
     setFormData((prev) => ({
       ...prev,
-      studentName
+      studentName,
+      studentId
     }));
     setValidStudent(true);
     setShowSuggestions(false);
@@ -191,6 +194,7 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
         // Reset form on success
         setFormData({
           studentName: '',
+          studentId: '',
           referralType: REFERRAL_TYPES[0],
           referralReason: REFERRAL_REASONS[0],
           referralNotes: ''
@@ -212,6 +216,7 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
     console.log("Reset button clicked");
     setFormData({
       studentName: '',
+      studentId: '',
       referralType: REFERRAL_TYPES[0],
       referralReason: REFERRAL_REASONS[0],
       referralNotes: ''
@@ -264,8 +269,8 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
               {studentSuggestions.map(student => (
                 <li 
                   key={student.id}
-                  onClick={() => handleStudentSelect(student.name)}
-                  className={formData.studentName === student.name ? 'selected' : ''}
+                  onClick={() => handleStudentSelect(student.name, student.id)}
+                  className={formData.studentId === student.id ? 'selected' : ''}
                 >
                   {student.name}
                 </li>

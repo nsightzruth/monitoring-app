@@ -21,7 +21,7 @@ const ReferralPage = ({ user, supabase }) => {
       // Get referrals for the current staff member
       const { data, error } = await supabase
         .from('Referrals')
-        .select('id, created_at, student_name, referral_type, referral_reason, referral_notes, status')
+        .select('id, created_at, student_name, referral_type, referral_reason, referral_notes, status, student_id')
         .eq('staff_id', user.id)
         .order('created_at', { ascending: false });
         
@@ -41,6 +41,7 @@ const ReferralPage = ({ user, supabase }) => {
       // Prepare the referral data
       const referralData = {
         student_name: newReferral.studentName,
+        student_id: newReferral.studentId, // Added student_id field
         referral_type: newReferral.referralType,
         referral_reason: newReferral.referralReason,
         referral_notes: newReferral.referralNotes,
