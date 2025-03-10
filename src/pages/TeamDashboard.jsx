@@ -1,62 +1,44 @@
-import { useState, useEffect, useRef } from 'react';
-import { useStudentData as useTeamStudentData } from '../hooks/useStudentData';
-import { useStudentData } from '../context/StudentDataContext';
-import TeamSelector from '../components/TeamSelector';
-import StudentTable from '../components/StudentTable';
-import '../styles/TeamDashboard.css';
+import { useState } from 'react';
+import { useTeams } from '../hooks/useTeams';
+import { useStudent } from '../hooks/useStudent';
+import Select from '../components/common/Select';
+import Table from '../components/common/Table';
+import Button from '../components/common/Button';
+import { IconButton } from '../components/common/Button';
+import FormMessage from '../components/common/Form';
+import '../styles/pages/TeamDashboard.css';
 
-const TeamDashboard = ({ user, supabase, onNavigate }) => {
-  const [selectedTeam, setSelectedTeam] = useState(null);
+/**
+ * Page component for team dashboard
+ */
+const TeamDashboard = ({ user, onNavigate }) => {
   const [activeMenu, setActiveMenu] = useState(null);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [actionSuccess, setActionSuccess] = useState(null);
-  const menuRef = useRef(null);
   
-  // Get context for cross-page communication
-  const { selectStudent } = useStudentData();
+  // Use our teams hook
+  const {
+    teams,
+    selectedTeam,
+    students,
+    studentData,
+    loading,
+    error,
+    actionStatus,
+    changeSelectedTeam,
+    markStudentReviewed,
+    resetActionStatus
+  } = useTeams(user?.id);
   
-  const { teams, students, loading, error, fetchStudentData } = useTeamStudentData(
-    supabase,
-    user,
-    selectedTeam
-  );
+  // Use student hook for navigation to incident form
+  const { selectStudent } = useStudent();
 
-  // Set initially selected team
-  useEffect(() => {
-    if (teams.length > 0 && !selectedTeam) {
-      setSelectedTeam(teams[0].id);
-    }
-  }, [teams, selectedTeam]);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setActiveMenu(null);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  // Auto-hide success message after 3 seconds
-  useEffect(() => {
-    if (actionSuccess) {
-      const timer = setTimeout(() => {
-        setActionSuccess(null);
-      }, 3000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [actionSuccess]);
-
+  // Handler for team selection
   const handleTeamChange = (e) => {
-    setSelectedTeam(e.target.value);
+    changeSelectedTeam(e.target.value);
+    // Close any open menu when changing teams
+    setActiveMenu(null);
   };
 
+  // Toggle the action menu for a student
   const toggleMenu = (studentId) => {
     if (activeMenu === studentId) {
       setActiveMenu(null);
@@ -65,40 +47,14 @@ const TeamDashboard = ({ user, supabase, onNavigate }) => {
     }
   };
 
+  // Handler for marking a student as reviewed
   const handleMarkReviewed = async (studentId) => {
-    try {
-      setActionLoading(true);
-      
-      // Get today's date in ISO format (YYYY-MM-DD)
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Create a new review record
-      const { data, error } = await supabase
-        .from('Reviews')
-        .insert([{
-          student_id: studentId,
-          review_date: today,
-        }])
-        .select();
-      
-      if (error) throw error;
-      
-      // Update the UI
-      setActionSuccess(`Review recorded for student`);
-      
-      // Refresh the data to show the updated review date
-      fetchStudentData();
-      
-      // Close the menu
-      setActiveMenu(null);
-    } catch (err) {
-      console.error('Error recording review:', err);
-      setError(`Failed to record review: ${err.message}`);
-    } finally {
-      setActionLoading(false);
-    }
+    await markStudentReviewed(studentId);
+    // Close the menu after action
+    setActiveMenu(null);
   };
-  
+
+  // Handler for adding a note for a student
   const handleAddNote = (student) => {
     // Store the selected student in context
     selectStudent(student);
@@ -109,35 +65,181 @@ const TeamDashboard = ({ user, supabase, onNavigate }) => {
     }
   };
 
+  // Define team select options
+  const teamOptions = teams.map(team => ({
+    value: team.id,
+    label: team.name
+  }));
+
+  // Prepare student data for the table
+  const tableData = students.map(student => {
+    const data = studentData[student.id] || {};
+    
+    return {
+      id: student.id,
+      name: student.name,
+      grade: student.grade,
+      photo: student.photo,
+      status: data.status || 'Unknown',
+      referralType: data.referrals && data.referrals.length > 0 
+        ? data.referrals[0].referral_type 
+        : 'N/A',
+      referralReason: data.referrals && data.referrals.length > 0 
+        ? data.referrals[0].referral_reason 
+        : 'N/A',
+      notes: data.notes || '',
+      lastReview: data.lastReview || 'Never',
+      // Include the full student data for the action menu
+      _fullData: { ...student, ...data }
+    };
+  });
+
+  // Define table columns
+  const columns = [
+    {
+      key: 'student',
+      title: 'Student',
+      render: (item) => (
+        <div className="student-cell">
+          {item.photo ? (
+            <img 
+              src={item.photo} 
+              alt={item.name} 
+              className="student-photo" 
+            />
+          ) : (
+            <div className="student-photo-placeholder">
+              {item.name.charAt(0)}
+            </div>
+          )}
+          <div className="student-info">
+            <div className="student-name">{item.name}</div>
+            {item.grade && <div className="student-grade">Grade: {item.grade}</div>}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      render: (item) => (
+        <span className={`status-badge ${item.status.toLowerCase().replace(/\s+/g, '-')}`}>
+          {item.status}
+        </span>
+      )
+    },
+    {
+      key: 'referralType',
+      title: 'Referral Type'
+    },
+    {
+      key: 'referralReason',
+      title: 'Referral Reason'
+    },
+    {
+      key: 'notes',
+      title: 'Notes',
+      render: (item) => (
+        <div className="notes-cell">
+          {item.notes ? (
+            item.notes.split('\n').map((note, idx) => (
+              <p key={idx} className="truncate-note" title={note}>{note}</p>
+            ))
+          ) : (
+            <span className="no-notes">No notes available</span>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'lastReview',
+      title: 'Last Review'
+    },
+    {
+      key: 'actions',
+      title: 'Actions',
+      render: (item) => (
+        <div className="actions-cell">
+          <div className="menu-container">
+            <IconButton 
+              title="Open menu"
+              onClick={() => toggleMenu(item.id)}
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="1"></circle>
+                  <circle cx="12" cy="5" r="1"></circle>
+                  <circle cx="12" cy="19" r="1"></circle>
+                </svg>
+              }
+            />
+            
+            {activeMenu === item.id && (
+              <div className="dropdown-menu">
+                <Button 
+                  variant="ghost"
+                  className="menu-item" 
+                  onClick={() => handleMarkReviewed(item.id)}
+                  disabled={actionStatus.loading}
+                  icon={
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 11l3 3L22 4"></path>
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                  }
+                >
+                  Reviewed today
+                </Button>
+                
+                <Button 
+                  variant="ghost"
+                  className="menu-item" 
+                  onClick={() => handleAddNote(item._fullData)}
+                  disabled={actionStatus.loading}
+                  icon={
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  }
+                >
+                  Add note
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    }
+  ];
+
   return (
     <section className="team-dashboard">
       <h2>Team Dashboard</h2>
       
-      {error && <div className="message error">{error}</div>}
-      {actionSuccess && <div className="message success">{actionSuccess}</div>}
+      {error && <FormMessage type="error">{error}</FormMessage>}
+      {actionStatus.error && <FormMessage type="error">{actionStatus.error}</FormMessage>}
+      {actionStatus.success && <FormMessage type="success">{actionStatus.success}</FormMessage>}
       
-      <TeamSelector 
-        teams={teams}
-        selectedTeam={selectedTeam}
-        onChange={handleTeamChange}
-        disabled={loading || teams.length === 0}
-      />
-      
-      {loading ? (
-        <div className="loading-indicator">Loading team data...</div>
-      ) : students.length === 0 ? (
-        <div className="no-data">No students found with relevant status in this team.</div>
-      ) : (
-        <StudentTable 
-          students={students}
-          activeMenu={activeMenu}
-          onToggleMenu={toggleMenu}
-          onMarkReviewed={handleMarkReviewed}
-          onAddNote={handleAddNote}
-          actionLoading={actionLoading}
-          menuRef={menuRef}
+      <div className="team-selector">
+        <label htmlFor="team-select">Select Team:</label>
+        <Select 
+          id="team-select"
+          options={teamOptions}
+          value={selectedTeam || ''}
+          onChange={handleTeamChange}
+          disabled={loading || teams.length === 0}
+          placeholder="Select a team"
         />
-      )}
+      </div>
+      
+      <Table
+        columns={columns}
+        data={tableData}
+        loading={loading}
+        emptyMessage="No students found with relevant status in this team."
+        loadingMessage="Loading team data..."
+        className="students-table"
+      />
     </section>
   );
 };

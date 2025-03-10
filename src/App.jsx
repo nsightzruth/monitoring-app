@@ -1,18 +1,13 @@
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { authService } from './services/supabase';
 import { StudentDataProvider } from './context/StudentDataContext';
 import AuthPage from './pages/AuthPage';
 import ReferralPage from './pages/ReferralPage';
 import AdminPage from './pages/AdminPage';
 import TeamDashboard from './pages/TeamDashboard';
 import IncidentNotePage from './pages/IncidentNotePage';
-import Navigation from './components/Navigation';
+import Navigation from './components/layout/Navigation';
 import './styles/App.css';
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 function App() {
   const [user, setUser] = useState(null);
@@ -20,7 +15,8 @@ function App() {
 
   // Check user auth status
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    // Setup auth state change listener
+    const { data: { subscription } } = authService.onAuthStateChange(
       (event, session) => {
         if (session) {
           setUser(session.user);
@@ -39,15 +35,19 @@ function App() {
   }, []);
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
+    try {
+      const user = await authService.getCurrentUser();
+      setUser(user); // This will be null if no user is logged in
+    } catch (error) {
+      console.error('Error checking user:', error);
+      setUser(null);
+    }
   };
 
   // Function to handle user logout
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await authService.logout();
       setUser(null);
     } catch (err) {
       console.error('Error logging out:', err);
@@ -67,14 +67,14 @@ function App() {
 
     switch (currentPage) {
       case 'admin':
-        return <AdminPage user={user} supabase={supabase} />;
+        return <AdminPage user={user} />;
       case 'teams':
-        return <TeamDashboard user={user} supabase={supabase} onNavigate={handleNavigation} />;
+        return <TeamDashboard user={user} onNavigate={handleNavigation} />;
       case 'incidents':
-        return <IncidentNotePage user={user} supabase={supabase} />;
+        return <IncidentNotePage user={user} />;
       case 'referrals':
       default:
-        return <ReferralPage user={user} supabase={supabase} />;
+        return <ReferralPage user={user} />;
     }
   };
 

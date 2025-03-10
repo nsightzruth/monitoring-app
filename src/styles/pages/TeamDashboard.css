@@ -1,0 +1,157 @@
+.team-dashboard {
+    width: 100%;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .team-dashboard h2 {
+    color: var(--secondary-color);
+    margin-bottom: 1.25rem;
+    font-size: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--tertiary-color);
+  }
+  
+  .team-selector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .team-selector label {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  
+  /* Student cell styling */
+  .student-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .student-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .student-photo-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+  
+  .student-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .student-name {
+    font-weight: 600;
+  }
+  
+  .student-grade {
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+  
+  /* Status badge styling */
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .status-badge.new {
+    background-color: var(--tertiary-color);
+    color: var(--primary-color);
+  }
+  
+  .status-badge.in-progress {
+    background-color: var(--warning-color);
+    color: var(--dark-text);
+  }
+  
+  .status-badge.on-watch {
+    background-color: var(--primary-color);
+    color: var(--light-text);
+  }
+  
+  .status-badge.closed {
+    background-color: var(--light-bg);
+    color: var(--primary-color);
+  }
+  
+  /* Notes and followups styling */
+  .notes-cell {
+    max-width: 300px;
+    white-space: pre-line;
+  }
+  
+  .notes-cell p {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed #eaedf0;
+  }
+  
+  .notes-cell p:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  
+  /* Add truncated note styling */
+  .truncate-note {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 0 0.25rem 0;
+    padding: 0 0 0.25rem 0;
+    max-width: 300px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  
+  .no-notes {
+    color: #b8c2cc;
+    font-style: italic;
+  }
+  
+  /* Action menu styling */
+  .actions-cell {
+    position: relative;
+  }
+  
+  .menu-container {
+    position: relative;
+  }
+  
+  .menu-item {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .team-selector {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }

@@ -1,0 +1,26 @@
+/* Additional styling for IncidentNotesTable */
+.truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  
+  .student-grade {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: normal;
+  }
+  
+  .type-cell {
+    text-transform: capitalize;
+  }
+  
+  .action-cell {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .incidents-notes-table td {
+    vertical-align: middle;
+  }

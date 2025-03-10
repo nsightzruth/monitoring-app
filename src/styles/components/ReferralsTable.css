@@ -1,0 +1,46 @@
+/* Additional styling for ReferralsTable */
+.notes-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .no-notes {
+    color: #b8c2cc;
+  }
+  
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .status-badge.new {
+    background-color: var(--tertiary-color);
+    color: var(--primary-color);
+  }
+  
+  .status-badge.in-progress {
+    background-color: var(--secondary-color);
+    color: var(--light-text);
+  }
+  
+  .status-badge.resolved {
+    background-color: var(--primary-color);
+    color: var(--light-text);
+  }
+  
+  .status-badge.closed {
+    background-color: var(--light-bg);
+    color: var(--primary-color);
+  }
+  
+  .action-cell {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }

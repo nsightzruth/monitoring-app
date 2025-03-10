@@ -1,88 +1,35 @@
-import { useState, useEffect } from 'react';
-import ReferralForm from '../components/ReferralForm';
-import ReferralsTable from '../components/ReferralsTable';
-import '../styles/ReferralPage.css';
+import { useReferrals } from '../hooks/useReferrals';
+import ReferralForm from '../components/referrals/ReferralForm';
+import ReferralsTable from '../components/referrals/ReferralsTable';
+import '../styles/pages/ReferralPage.css';
 
-const ReferralPage = ({ user, supabase }) => {
-  const [referrals, setReferrals] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentReferral, setCurrentReferral] = useState(null);
+/**
+ * Page component for managing referrals
+ */
+const ReferralPage = ({ user }) => {
+  // Use our referrals hook
+  const {
+    referrals,
+    currentReferral,
+    loading,
+    error,
+    addReferral,
+    viewReferral,
+    resetCurrentReferral
+  } = useReferrals(user?.id);
 
-  // Fetch referrals on component mount
-  useEffect(() => {
-    fetchReferrals();
-  }, []);
-
-  const fetchReferrals = async () => {
-    try {
-      setLoading(true);
-      
-      // Get referrals for the current staff member
-      const { data, error } = await supabase
-        .from('Referrals')
-        .select('id, created_at, student_name, referral_type, referral_reason, referral_notes, status, student_id')
-        .eq('staff_id', user.id)
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      
-      setReferrals(data || []);
-    } catch (err) {
-      console.error('Error fetching referrals:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  // Handler for form submission
+  const handleSubmitReferral = async (formData) => {
+    return await addReferral({
+      studentName: formData.studentName,
+      studentId: formData.studentId,
+      referralType: formData.referralType,
+      referralReason: formData.referralReason,
+      referralNotes: formData.referralNotes
+    });
   };
 
-  const addReferral = async (newReferral) => {
-    try {
-      // Prepare the referral data
-      const referralData = {
-        student_name: newReferral.studentName,
-        student_id: newReferral.studentId, // Added student_id field
-        referral_type: newReferral.referralType,
-        referral_reason: newReferral.referralReason,
-        referral_notes: newReferral.referralNotes,
-        status: 'New',
-        staff_id: user.id
-      };
-      
-      // Insert new referral
-      const { data, error } = await supabase
-        .from('Referrals')
-        .insert([referralData])
-        .select();
-        
-      if (error) {
-        throw error;
-      }
-      
-      // Update state with the new referral
-      if (data && data.length > 0) {
-        setReferrals([data[0], ...referrals]);
-      }
-      
-      return { success: true };
-    } catch (err) {
-      console.error('Error adding referral:', err);
-      return { success: false, error: err.message };
-    }
-  };
-
-  // Function to handle viewing a referral
-  const handleViewReferral = (referral) => {
-    setCurrentReferral(referral);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
-  // Function to handle resetting the form
-  const handleResetForm = () => {
-    setCurrentReferral(null);
-  };
-  
-  // Function to handle copying notes
+  // Handler for copying notes to clipboard
   const handleCopyNote = (notes) => {
     navigator.clipboard.writeText(notes)
       .then(() => {
@@ -99,23 +46,22 @@ const ReferralPage = ({ user, supabase }) => {
       <section className="form-section">
         <h2>Submit New Referral</h2>
         <ReferralForm 
-          onSubmit={addReferral} 
+          onSubmit={handleSubmitReferral} 
           referralToView={currentReferral}
-          onReset={handleResetForm}
+          onReset={resetCurrentReferral}
         />
       </section>
       
       <section className="table-section">
         <h2>Your Referrals</h2>
-        {loading ? (
-          <p>Loading referrals...</p>
-        ) : error ? (
-          <p className="error">{error}</p>
+        {error ? (
+          <p className="error-message">{error}</p>
         ) : (
           <ReferralsTable 
             referrals={referrals} 
-            onView={handleViewReferral}
+            onView={viewReferral}
             onCopyNote={handleCopyNote}
+            loading={loading}
           />
         )}
       </section>

@@ -1,5 +1,5 @@
-import Auth from '../components/Auth';
-import '../styles/AuthPage.css';
+import Auth from '../components/auth/Auth';
+import '../styles/pages/AuthPage.css';
 
 const AuthPage = ({ onLogin }) => {
   return (
