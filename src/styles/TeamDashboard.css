@@ -173,6 +173,93 @@
     font-style: italic;
 }
 
+/* Action menu styling */
+.actions-cell {
+    position: relative;
+}
+
+.menu-container {
+    position: relative;
+}
+
+.menu-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--secondary-color);
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+    width: 32px;
+    height: 32px;
+}
+
+.menu-button:hover {
+    background-color: rgba(10, 123, 131, 0.1);
+    color: var(--primary-color);
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    min-width: 180px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    overflow: hidden;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.9rem;
+}
+
+.menu-item:hover {
+    background-color: var(--light-bg);
+}
+
+.menu-item:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.menu-item svg {
+    color: var(--secondary-color);
+}
+
+/* Message styling */
+.message {
+    padding: 0.75rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+}
+
+.message.success {
+    background-color: rgba(42, 157, 143, 0.2);
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+}
+
+.message.error {
+    background-color: rgba(230, 57, 70, 0.2);
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+}
+
 /* Responsive adjustments */
 @media (max-width: 1200px) {
     .students-table {
