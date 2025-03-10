@@ -53,6 +53,12 @@ const Navigation = ({ user, currentPage, onNavigation, onLogout }) => {
                 Referrals
               </button>
               <button 
+                className={`nav-link ${currentPage === 'incidents' ? 'active' : ''}`}
+                onClick={() => handleNavClick('incidents')}
+              >
+                Incidents & Notes
+              </button>
+              <button 
                 className={`nav-link ${currentPage === 'teams' ? 'active' : ''}`}
                 onClick={() => handleNavClick('teams')}
               >

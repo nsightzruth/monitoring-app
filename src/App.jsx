@@ -4,6 +4,7 @@ import AuthPage from './pages/AuthPage';
 import ReferralPage from './pages/ReferralPage';
 import AdminPage from './pages/AdminPage';
 import TeamDashboard from './pages/TeamDashboard';
+import IncidentNotePage from './pages/IncidentNotePage'; // Import the new page
 import Navigation from './components/Navigation';
 import './styles/App.css';
 
@@ -68,6 +69,8 @@ function App() {
         return <AdminPage user={user} supabase={supabase} />;
       case 'teams':
         return <TeamDashboard user={user} supabase={supabase} />;
+      case 'incidents':
+        return <IncidentNotePage user={user} supabase={supabase} />;
       case 'referrals':
       default:
         return <ReferralPage user={user} supabase={supabase} />;
