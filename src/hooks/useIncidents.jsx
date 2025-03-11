@@ -13,6 +13,7 @@ export const useIncidents = (staffId) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitStatus, setSubmitStatus] = useState({ loading: false, error: null, success: false });
+  const [editMode, setEditMode] = useState(false);
 
   // Fetch incidents and notes when staffId changes
   useEffect(() => {
@@ -63,11 +64,47 @@ export const useIncidents = (staffId) => {
   }, [staffId]);
 
   /**
-   * Set the current record to view
-   * @param {Object} record - Incident/note record to view
+   * Edit an existing incident or note
+   * @param {string} recordId - ID of the record to edit
+   * @param {Object} recordData - Updated data
+   * @returns {Promise<Object>} - Result of the operation
    */
-  const viewRecord = useCallback((record) => {
+  const editIncident = useCallback(async (recordId, recordData) => {
+    try {
+      setSubmitStatus({ loading: true, error: null, success: false });
+      
+      // If there's a student name change, include it in the update
+      const updateData = {
+        ...recordData,
+        student_name: recordData.studentName || recordData.student_name
+      };
+      
+      const updatedRecord = await incidentService.updateIncident(recordId, updateData);
+      
+      // Update state with the edited record
+      setRecords(prevRecords => 
+        prevRecords.map(record => 
+          record.id === recordId ? updatedRecord : record
+        )
+      );
+      
+      setSubmitStatus({ loading: false, error: null, success: true });
+      return { success: true, data: updatedRecord };
+    } catch (err) {
+      console.error('Error editing incident/note:', err);
+      setSubmitStatus({ loading: false, error: err.message, success: false });
+      return { success: false, error: err.message };
+    }
+  }, []);
+
+  /**
+   * Set the current record to view or edit
+   * @param {Object} record - Incident/note record to view or edit
+   * @param {boolean} isEdit - Whether to put the form in edit mode
+   */
+  const viewRecord = useCallback((record, isEdit = false) => {
     setCurrentRecord(record);
+    setEditMode(isEdit);
   }, []);
 
   /**
@@ -75,6 +112,7 @@ export const useIncidents = (staffId) => {
    */
   const resetCurrentRecord = useCallback(() => {
     setCurrentRecord(null);
+    setEditMode(false);
   }, []);
 
   /**
@@ -104,8 +142,10 @@ export const useIncidents = (staffId) => {
     loading,
     error,
     submitStatus,
+    editMode,
     fetchIncidents,
     addIncident,
+    editIncident,
     viewRecord,
     resetCurrentRecord,
     resetSubmitStatus,

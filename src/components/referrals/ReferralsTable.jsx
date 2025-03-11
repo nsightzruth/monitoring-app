@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { formatLocalDate } from '../../utils/dateUtils';
 import Table from '../common/Table';
 import { IconButton } from '../common/Button';
 import '../../styles/components/ReferralsTable.css';
@@ -7,17 +7,6 @@ import '../../styles/components/ReferralsTable.css';
  * Component for displaying a table of referrals
  */
 const ReferralsTable = ({ referrals, onView, onCopyNote, loading }) => {
-  // Format date helper function
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      return format(date, 'MMM d, yyyy h:mm a');
-    } catch (e) {
-      console.error('Error formatting date:', e);
-      return dateString;
-    }
-  };
-
   // Handle viewing a referral
   const handleView = (referral) => {
     if (onView) {
@@ -37,7 +26,7 @@ const ReferralsTable = ({ referrals, onView, onCopyNote, loading }) => {
     {
       key: 'created_at',
       title: 'Date',
-      render: (item) => formatDate(item.created_at)
+      render: (item) => formatLocalDate(item.created_at)
     },
     {
       key: 'student_name',

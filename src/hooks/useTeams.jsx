@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { teamService, studentService } from '../services/supabase';
 import { incidentService } from '../services/supabase';
-import { format } from 'date-fns';
+import { formatLocalDate } from '../utils/dateUtils';
 
 /**
  * Custom hook for managing teams and students data
@@ -78,19 +78,6 @@ export const useTeams = (staffId) => {
   }, [selectedTeam]);
 
   /**
-   * Format date for display
-   * @param {string} dateString - ISO date string
-   * @returns {string} - Formatted date
-   */
-  const formatDate = useCallback((dateString) => {
-    try {
-      return format(new Date(dateString), 'MMM d, yyyy');
-    } catch (error) {
-      return dateString;
-    }
-  }, []);
-
-  /**
    * Process student data to include referrals, incidents, and reviews
    * @param {Array} studentsArray - Array of students
    * @param {Array} referralsArray - Array of referrals
@@ -112,7 +99,8 @@ export const useTeams = (staffId) => {
         
         // Format incidents/notes
         const formattedNotes = studentIncidents.map(incident => {
-          const noteDate = formatDate(incident.date);
+          // Properly format the date from the incident record
+          const noteDate = formatLocalDate(incident.date);
           
           if (incident.type === 'Incident') {
             return {
@@ -129,14 +117,15 @@ export const useTeams = (staffId) => {
         
         // Add referral note if available and we have fewer than 5 notes
         if (studentReferrals.length > 0 && studentReferrals[0].referral_notes && formattedNotes.length < 5) {
-          const referralDate = formatDate(studentReferrals[0].created_at);
+          // Format the date correctly for the referral note
+          const referralDate = formatLocalDate(studentReferrals[0].created_at);
           formattedNotes.push({
             date: studentReferrals[0].created_at,
             formattedNote: `${referralDate} - Referred: ${studentReferrals[0].referral_notes}`
           });
         }
         
-        // Sort by date and limit to 5 most recent
+        // Sort by date (newest first) and limit to 5 most recent
         const sortedNotes = formattedNotes
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .slice(0, 5)
@@ -146,8 +135,8 @@ export const useTeams = (staffId) => {
         // Get latest review date
         const latestReview = studentReviews.length > 0 ? studentReviews[0] : null;
         const lastReviewDate = latestReview
-          ? (latestReview.review_date ? formatDate(latestReview.review_date) : formatDate(latestReview.created_at))
-          : (studentReferrals.length > 0 ? formatDate(studentReferrals[0].created_at) : 'Never');
+          ? (latestReview.review_date ? formatLocalDate(latestReview.review_date) : formatLocalDate(latestReview.created_at))
+          : (studentReferrals.length > 0 ? formatLocalDate(studentReferrals[0].created_at) : 'Never');
         
         // Store processed data
         processedData[student.id] = {
@@ -164,7 +153,7 @@ export const useTeams = (staffId) => {
     } catch (err) {
       console.error('Error processing student data:', err);
     }
-  }, [formatDate]);
+  }, []);
 
   /**
    * Mark a student as reviewed
@@ -184,7 +173,7 @@ export const useTeams = (staffId) => {
           updatedData[studentId] = {
             ...updatedData[studentId],
             reviews: [review, ...(updatedData[studentId].reviews || [])],
-            lastReview: formatDate(new Date())
+            lastReview: formatLocalDate(new Date())
           };
         }
         return updatedData;
@@ -198,7 +187,7 @@ export const useTeams = (staffId) => {
       setActionStatus({ loading: false, error: err.message, success: null });
       return { success: false, error: err.message };
     }
-  }, [formatDate]);
+  }, []);
 
   /**
    * Reset the action status

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTeams } from '../hooks/useTeams';
 import { useStudentData } from '../context/StudentDataContext'
-import { useStudent } from '../hooks/useStudent';
+// import { useStudent } from '../hooks/useStudent';
 import Select from '../components/common/Select';
 import Table from '../components/common/Table';
 import Button from '../components/common/Button';

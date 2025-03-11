@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useIncidents } from '../hooks/useIncidents';
-import { useStudentData } from '../context/StudentDataContext';
+import { useStudent } from '../hooks/useStudent';
 import IncidentNoteForm from '../components/incidents/IncidentNoteForm';
 import IncidentNotesTable from '../components/incidents/IncidentNotesTable';
 import '../styles/pages/IncidentNotePage.css';
@@ -15,23 +15,24 @@ const IncidentNotePage = ({ user }) => {
     currentRecord,
     loading,
     error,
+    editMode,
     addIncident,
+    editIncident,
     viewRecord,
     resetCurrentRecord
   } = useIncidents(user?.id);
   
   // Student context is used to check if a student was pre-selected
-  const { selectedStudent } = useStudentData();
+  const { selectedStudent } = useStudent();
 
   // Scroll to form if a student was selected in another page
   useEffect(() => {
     if (selectedStudent) {
-      console.log('Student was selected in another page:', selectedStudent);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [selectedStudent]);
 
-  // Handler for form submission
+  // Handler for form submission (new record)
   const handleSubmitRecord = async (formData) => {
     return await addIncident({
       studentId: formData.studentId,
@@ -45,47 +46,34 @@ const IncidentNotePage = ({ user }) => {
     });
   };
 
-  // Handler for copying notes to clipboard
-  const handleCopyNote = (record) => {
-    let textToCopy = '';
-    
-    // Format date/time
-    const dateTime = record.time 
-      ? new Date(`${record.date}T${record.time}`)
-      : new Date(record.date);
-    
-    const dateTimeStr = record.time
-      ? dateTime.toLocaleString()
-      : dateTime.toLocaleDateString();
-    
-    if (record.type === 'Incident') {
-      // For incidents, include offense, location, and note
-      textToCopy = `${dateTimeStr} - ${record.offense || 'Incident'}`;
-      if (record.location) textToCopy += ` at ${record.location}`;
-      if (record.note) textToCopy += `: ${record.note}`;
-    } else {
-      // For notes, include the date and note text
-      textToCopy = `${dateTimeStr} - ${record.note || 'No details provided'}`;
-    }
-    
-    // Copy to clipboard
-    navigator.clipboard.writeText(textToCopy)
-      .then(() => {
-        alert('Notes copied to clipboard!');
-      })
-      .catch(err => {
-        console.error('Failed to copy text: ', err);
-        alert('Failed to copy notes. Please try again.');
-      });
+  // Handler for editing a record
+  const handleEditRecord = async (recordId, formData) => {
+    return await editIncident(recordId, formData);
+  };
+
+  // Handler for viewing a record
+  const handleViewRecord = (record) => {
+    viewRecord(record, false);
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handler for editing a record
+  const handleEditButtonClick = (record) => {
+    viewRecord(record, true);
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <>
       <section className="form-section">
-        <h2>Submit New Incident/Note</h2>
+        <h2>{currentRecord && editMode ? 'Edit Incident/Note' : 'Submit New Incident/Note'}</h2>
         <IncidentNoteForm 
-          onSubmit={handleSubmitRecord} 
+          onSubmit={handleSubmitRecord}
+          onEdit={handleEditRecord}
           incidentToView={currentRecord}
+          editMode={editMode}
           onReset={resetCurrentRecord}
         />
       </section>
@@ -97,8 +85,8 @@ const IncidentNotePage = ({ user }) => {
         ) : (
           <IncidentNotesTable 
             records={records} 
-            onView={viewRecord}
-            onCopyNote={handleCopyNote}
+            onView={handleViewRecord}
+            onEdit={handleEditButtonClick}
             loading={loading}
           />
         )}

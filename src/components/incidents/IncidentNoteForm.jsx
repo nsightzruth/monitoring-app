@@ -1,23 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useForm } from '../../hooks/useForm';
 import { createValidator, isEmpty } from '../../utils/validation';
-import { useStudentData } from '../../context/StudentDataContext';
+// import { useStudent } from '../../hooks/useStudent';
+import { useStudentData } from '../../context/StudentDataContext'
+import { getTodayForInput, getCurrentTimeForInput } from '../../utils/dateUtils';
 import Form, { FormRow, FormActions } from '../common/Form';
+import FormMessage from '../common/Form';
 import Input from '../common/Input';
 import Select from '../common/Select';
 import Button from '../common/Button';
 import StudentSearch from '../common/StudentSearch';
 import '../../styles/components/IncidentNoteForm.css';
 
-// Get today's date and time for default values
-const today = new Date();
-// Format date as YYYY-MM-DD using local timezone
-const formattedDate = today.getFullYear() + '-' + 
-                      String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                      String(today.getDate()).padStart(2, '0');
-// Format time as HH:MM
-const formattedTime = String(today.getHours()).padStart(2, '0') + ':' + 
-                      String(today.getMinutes()).padStart(2, '0');
+// Get today's date and time for default values using the utility functions
+const formattedDate = getTodayForInput();
+const formattedTime = getCurrentTimeForInput();
 
 // Incident/note types
 const INCIDENT_NOTE_TYPES = [
@@ -58,22 +55,29 @@ const createIncidentValidator = (formData) => {
 };
 
 /**
- * Component for submitting new incidents and notes
+ * Component for submitting new incidents and notes or editing existing ones
+ * 
+ * @param {Object} props - Component props
+ * @param {Function} props.onSubmit - Function to call when submitting a new record
+ * @param {Function} props.onEdit - Function to call when editing an existing record
+ * @param {Object} props.incidentToView - Record to view
+ * @param {boolean} props.editMode - Whether the form is in edit mode
+ * @param {Function} props.onReset - Function to call when resetting the form
  */
-const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
+const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, onReset }) => {
   // Access student context to find if there's a pre-selected student
   const { selectedStudent, clearSelectedStudent } = useStudentData();
   
   // Track if we're in view mode (viewing existing record)
   const [viewMode, setViewMode] = useState(false);
+  // Track if we're in edit mode
+  const [isEditMode, setIsEditMode] = useState(editMode);
   // Track if the student is valid (exists in the database)
   const [validStudent, setValidStudent] = useState(false);
   // Track any server errors
   const [serverError, setServerError] = useState(null);
   // Track success message
   const [successMessage, setSuccessMessage] = useState(null);
-  // Track if we've processed the selected student to avoid infinite loops
-  const [hasProcessedSelectedStudent, setHasProcessedSelectedStudent] = useState(false);
   
   // Initialize form hook with dynamic validation
   const {
@@ -105,7 +109,7 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
     },
     // Submit handler
     async (formData) => {
-      if (!validStudent) {
+      if (!validStudent && !isEditMode) {
         return { success: false, error: 'Please select a valid student from the suggestions' };
       }
 
@@ -113,14 +117,34 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
         setServerError(null);
         setSuccessMessage(null);
         
-        const result = await onSubmit(formData);
+        let result;
+        if (isEditMode && incidentToView) {
+          // Edit existing record
+          result = await onEdit(incidentToView.id, {
+            type: formData.type,
+            date: formData.date,
+            time: formData.time,
+            location: formData.location,
+            offense: formData.offense,
+            note: formData.note,
+            studentName: formData.studentName // Include student name in edit
+          });
+        } else {
+          // Create new record
+          result = await onSubmit(formData);
+        }
         
         if (result.success) {
           // Reset form on success
-          resetForm();
-          setValidStudent(false);
-          setHasProcessedSelectedStudent(false);
-          setSuccessMessage('Record submitted successfully!');
+          if (!isEditMode) {
+            resetForm();
+            setValidStudent(false);
+          } else {
+            // In edit mode, just exit edit mode
+            setIsEditMode(false);
+            setViewMode(true);
+          }
+          setSuccessMessage(isEditMode ? 'Record updated successfully!' : 'Record submitted successfully!');
           return result;
         } else {
           setServerError(result.error || 'Failed to submit record');
@@ -136,27 +160,18 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
 
   // Use pre-selected student if available (from team dashboard)
   useEffect(() => {
-    // Only process the selectedStudent once and only if it exists and we're not viewing an existing record
-    if (selectedStudent && !incidentToView && !hasProcessedSelectedStudent) {
-      console.log('Pre-filling form with selected student:', selectedStudent);
-      
-      // Update form values
-      setFormValues({
-        ...values,
+    if (selectedStudent && !incidentToView) {
+      setFormValues(prevData => ({
+        ...prevData,
         studentName: selectedStudent.name || '',
         studentId: selectedStudent.id || ''
-      });
-      
-      // Mark student as valid
+      }));
       setValidStudent(true);
       
-      // Mark that we've processed this student
-      setHasProcessedSelectedStudent(true);
-      
-      // Clear the selected student from context
+      // Clear the selected student from context after using it
       clearSelectedStudent();
     }
-  }, [selectedStudent, hasProcessedSelectedStudent, incidentToView, values]);
+  }, [selectedStudent, clearSelectedStudent, incidentToView, setFormValues]);
 
   // Update form when incidentToView changes
   useEffect(() => {
@@ -172,16 +187,17 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
         note: incidentToView.note || ''
       });
       setViewMode(true);
+      setIsEditMode(editMode);
       setValidStudent(true);
-      setHasProcessedSelectedStudent(true); // Prevent conflicts with selectedStudent
     } else {
       setViewMode(false);
+      setIsEditMode(false);
       // Only reset valid student if it's not prefilled from context
-      if (!selectedStudent && !hasProcessedSelectedStudent) {
+      if (!selectedStudent) {
         setValidStudent(false);
       }
     }
-  }, [incidentToView, setFormValues, selectedStudent, hasProcessedSelectedStudent]);
+  }, [incidentToView, editMode, setFormValues, selectedStudent]);
 
   // Handle student selection from the dropdown
   const handleStudentSelect = (student) => {
@@ -197,13 +213,19 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
   const handleReset = () => {
     resetForm();
     setViewMode(false);
+    setIsEditMode(false);
     setValidStudent(false);
     setServerError(null);
     setSuccessMessage(null);
-    setHasProcessedSelectedStudent(false); 
     if (onReset) {
       onReset();
     }
+  };
+  
+  // Handle edit button click
+  const handleEditClick = () => {
+    setIsEditMode(true);
+    setViewMode(false);
   };
 
   return (
@@ -220,9 +242,15 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
         </div>
       )}
       
-      {viewMode && (
+      {viewMode && !isEditMode && (
         <div className="view-mode-banner">
           <p>Viewing existing record - Form is in read-only mode</p>
+        </div>
+      )}
+      
+      {isEditMode && (
+        <div className="edit-mode-banner">
+          <p>Editing existing record</p>
         </div>
       )}
       
@@ -239,7 +267,7 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
                 }
               }}
               onSelect={handleStudentSelect}
-              disabled={isSubmitting || viewMode}
+              disabled={isSubmitting || (viewMode && !isEditMode)}
               required
             />
             {touched.studentName && errors.studentName && (
@@ -256,7 +284,7 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
             options={INCIDENT_NOTE_TYPES}
             value={values.type}
             onChange={handleChange}
-            disabled={isSubmitting || viewMode}
+            disabled={isSubmitting || (viewMode && !isEditMode)}
             required
           />
           
@@ -270,7 +298,7 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
             onBlur={handleBlur}
             error={touched.date && !!errors.date}
             errorMessage={errors.date}
-            disabled={isSubmitting || viewMode}
+            disabled={isSubmitting || (viewMode && !isEditMode)}
             required
           />
           
@@ -281,11 +309,11 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
             label="Time"
             value={values.time}
             onChange={handleChange}
-            disabled={isSubmitting || viewMode}
+            disabled={isSubmitting || (viewMode && !isEditMode)}
           />
         </FormRow>
         
-        {(values.type === 'Incident' || (viewMode && incidentToView?.type === 'Incident')) && (
+        {(values.type === 'Incident' || ((viewMode || isEditMode) && incidentToView?.type === 'Incident')) && (
           <FormRow>
             <Input
               id="location"
@@ -298,7 +326,7 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
               error={touched.location && !!errors.location}
               errorMessage={errors.location}
               placeholder="Where did the incident occur?"
-              disabled={isSubmitting || viewMode}
+              disabled={isSubmitting || (viewMode && !isEditMode)}
               required={values.type === 'Incident'}
             />
             
@@ -313,7 +341,7 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
               error={touched.offense && !!errors.offense}
               errorMessage={errors.offense}
               placeholder="What was the offense?"
-              disabled={isSubmitting || viewMode}
+              disabled={isSubmitting || (viewMode && !isEditMode)}
               required={values.type === 'Incident'}
             />
           </FormRow>
@@ -330,7 +358,7 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
               onBlur={handleBlur}
               placeholder="Additional details or context"
               rows={4}
-              disabled={isSubmitting || viewMode}
+              disabled={isSubmitting || (viewMode && !isEditMode)}
               required={values.type === 'Note'}
               className="incident-note-textarea"
             />
@@ -341,22 +369,44 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
         </div>
         
         <FormActions>
-          <Button 
-            type="button" 
-            variant="secondary" 
-            onClick={handleReset}
-          >
-            {viewMode ? 'New Record' : 'Reset Form'}
-          </Button>
-          
-          <Button 
-            type="submit" 
-            variant="primary" 
-            isLoading={isSubmitting}
-            disabled={isSubmitting || viewMode || !validStudent}
-          >
-            Submit
-          </Button>
+          {viewMode && !isEditMode ? (
+            <>
+              <Button 
+                type="button" 
+                variant="secondary" 
+                onClick={handleReset}
+              >
+                New Record
+              </Button>
+              
+              <Button 
+                type="button" 
+                variant="primary" 
+                onClick={handleEditClick}
+              >
+                Edit Record
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                type="button" 
+                variant="secondary" 
+                onClick={handleReset}
+              >
+                {isEditMode ? 'Cancel Edit' : 'Reset Form'}
+              </Button>
+              
+              <Button 
+                type="submit" 
+                variant="primary" 
+                isLoading={isSubmitting}
+                disabled={isSubmitting || (!validStudent && !isEditMode)}
+              >
+                {isEditMode ? 'Save Changes' : 'Submit'}
+              </Button>
+            </>
+          )}
         </FormActions>
       </Form>
     </div>
