@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from '../../hooks/useForm';
 import { createValidator, isEmpty } from '../../utils/validation';
-import { useStudent } from '../../hooks/useStudent';
+import { useStudentData } from '../../context/StudentDataContext';
 import Form, { FormRow, FormActions } from '../common/Form';
 import Input from '../common/Input';
 import Select from '../common/Select';
@@ -11,8 +11,13 @@ import '../../styles/components/IncidentNoteForm.css';
 
 // Get today's date and time for default values
 const today = new Date();
-const formattedDate = today.toISOString().split('T')[0];
-const formattedTime = today.toTimeString().slice(0, 5);
+// Format date as YYYY-MM-DD using local timezone
+const formattedDate = today.getFullYear() + '-' + 
+                      String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                      String(today.getDate()).padStart(2, '0');
+// Format time as HH:MM
+const formattedTime = String(today.getHours()).padStart(2, '0') + ':' + 
+                      String(today.getMinutes()).padStart(2, '0');
 
 // Incident/note types
 const INCIDENT_NOTE_TYPES = [
@@ -57,7 +62,7 @@ const createIncidentValidator = (formData) => {
  */
 const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
   // Access student context to find if there's a pre-selected student
-  const { selectedStudent, clearSelectedStudent } = useStudent();
+  const { selectedStudent, clearSelectedStudent } = useStudentData();
   
   // Track if we're in view mode (viewing existing record)
   const [viewMode, setViewMode] = useState(false);
@@ -67,6 +72,8 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
   const [serverError, setServerError] = useState(null);
   // Track success message
   const [successMessage, setSuccessMessage] = useState(null);
+  // Track if we've processed the selected student to avoid infinite loops
+  const [hasProcessedSelectedStudent, setHasProcessedSelectedStudent] = useState(false);
   
   // Initialize form hook with dynamic validation
   const {
@@ -112,6 +119,7 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
           // Reset form on success
           resetForm();
           setValidStudent(false);
+          setHasProcessedSelectedStudent(false);
           setSuccessMessage('Record submitted successfully!');
           return result;
         } else {
@@ -128,18 +136,27 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
 
   // Use pre-selected student if available (from team dashboard)
   useEffect(() => {
-    if (selectedStudent && !incidentToView) {
-      setFormValues(prevData => ({
-        ...prevData,
+    // Only process the selectedStudent once and only if it exists and we're not viewing an existing record
+    if (selectedStudent && !incidentToView && !hasProcessedSelectedStudent) {
+      console.log('Pre-filling form with selected student:', selectedStudent);
+      
+      // Update form values
+      setFormValues({
+        ...values,
         studentName: selectedStudent.name || '',
         studentId: selectedStudent.id || ''
-      }));
+      });
+      
+      // Mark student as valid
       setValidStudent(true);
       
-      // Clear the selected student from context after using it
+      // Mark that we've processed this student
+      setHasProcessedSelectedStudent(true);
+      
+      // Clear the selected student from context
       clearSelectedStudent();
     }
-  }, [selectedStudent, clearSelectedStudent, incidentToView, setFormValues]);
+  }, [selectedStudent, hasProcessedSelectedStudent, incidentToView, values]);
 
   // Update form when incidentToView changes
   useEffect(() => {
@@ -156,14 +173,15 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
       });
       setViewMode(true);
       setValidStudent(true);
+      setHasProcessedSelectedStudent(true); // Prevent conflicts with selectedStudent
     } else {
       setViewMode(false);
       // Only reset valid student if it's not prefilled from context
-      if (!selectedStudent) {
+      if (!selectedStudent && !hasProcessedSelectedStudent) {
         setValidStudent(false);
       }
     }
-  }, [incidentToView, setFormValues, selectedStudent]);
+  }, [incidentToView, setFormValues, selectedStudent, hasProcessedSelectedStudent]);
 
   // Handle student selection from the dropdown
   const handleStudentSelect = (student) => {
@@ -182,6 +200,7 @@ const IncidentNoteForm = ({ onSubmit, incidentToView, onReset }) => {
     setValidStudent(false);
     setServerError(null);
     setSuccessMessage(null);
+    setHasProcessedSelectedStudent(false); 
     if (onReset) {
       onReset();
     }

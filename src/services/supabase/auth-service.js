@@ -66,6 +66,14 @@ export const authService = {
     return supabase.auth.onAuthStateChange((event, session) => {
       callback(event, session);
     });
+  },
+
+  /**
+   * Get the Supabase client instance
+   * @returns {Object} - The Supabase client
+   */
+  getSupabase() {
+    return supabase;
   }
 };
 

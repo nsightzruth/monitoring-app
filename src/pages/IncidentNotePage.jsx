@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useIncidents } from '../hooks/useIncidents';
-import { useStudent } from '../hooks/useStudent';
+import { useStudentData } from '../context/StudentDataContext';
 import IncidentNoteForm from '../components/incidents/IncidentNoteForm';
 import IncidentNotesTable from '../components/incidents/IncidentNotesTable';
 import '../styles/pages/IncidentNotePage.css';
@@ -21,11 +21,12 @@ const IncidentNotePage = ({ user }) => {
   } = useIncidents(user?.id);
   
   // Student context is used to check if a student was pre-selected
-  const { selectedStudent } = useStudent();
+  const { selectedStudent } = useStudentData();
 
   // Scroll to form if a student was selected in another page
   useEffect(() => {
     if (selectedStudent) {
+      console.log('Student was selected in another page:', selectedStudent);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [selectedStudent]);
@@ -42,6 +43,40 @@ const IncidentNotePage = ({ user }) => {
       offense: formData.type === 'Incident' ? formData.offense : null,
       note: formData.note
     });
+  };
+
+  // Handler for copying notes to clipboard
+  const handleCopyNote = (record) => {
+    let textToCopy = '';
+    
+    // Format date/time
+    const dateTime = record.time 
+      ? new Date(`${record.date}T${record.time}`)
+      : new Date(record.date);
+    
+    const dateTimeStr = record.time
+      ? dateTime.toLocaleString()
+      : dateTime.toLocaleDateString();
+    
+    if (record.type === 'Incident') {
+      // For incidents, include offense, location, and note
+      textToCopy = `${dateTimeStr} - ${record.offense || 'Incident'}`;
+      if (record.location) textToCopy += ` at ${record.location}`;
+      if (record.note) textToCopy += `: ${record.note}`;
+    } else {
+      // For notes, include the date and note text
+      textToCopy = `${dateTimeStr} - ${record.note || 'No details provided'}`;
+    }
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        alert('Notes copied to clipboard!');
+      })
+      .catch(err => {
+        console.error('Failed to copy text: ', err);
+        alert('Failed to copy notes. Please try again.');
+      });
   };
 
   return (
@@ -63,6 +98,7 @@ const IncidentNotePage = ({ user }) => {
           <IncidentNotesTable 
             records={records} 
             onView={viewRecord}
+            onCopyNote={handleCopyNote}
             loading={loading}
           />
         )}

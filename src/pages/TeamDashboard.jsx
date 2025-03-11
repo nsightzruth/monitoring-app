@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTeams } from '../hooks/useTeams';
+import { useStudentData } from '../context/StudentDataContext'
 import { useStudent } from '../hooks/useStudent';
 import Select from '../components/common/Select';
 import Table from '../components/common/Table';
@@ -13,7 +14,38 @@ import '../styles/pages/TeamDashboard.css';
  */
 const TeamDashboard = ({ user, onNavigate }) => {
   const [activeMenu, setActiveMenu] = useState(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setActiveMenu(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalClick = (event) => {
+      // Check if the active menu is open and the click is outside
+      if (activeMenu && menuRef.current && !menuRef.current.contains(event.target)) {
+        setActiveMenu(null);
+      }
+    };
   
+    // Add the event listener
+    document.addEventListener('mousedown', handleGlobalClick);
+  
+    return () => {
+      // Clean up the event listener
+      document.removeEventListener('mousedown', handleGlobalClick);
+    };
+  }, [activeMenu]);
+
   // Use our teams hook
   const {
     teams,
@@ -29,7 +61,7 @@ const TeamDashboard = ({ user, onNavigate }) => {
   } = useTeams(user?.id);
   
   // Use student hook for navigation to incident form
-  const { selectStudent } = useStudent();
+  const { selectStudent } = useStudentData();
 
   // Handler for team selection
   const handleTeamChange = (e) => {
@@ -40,13 +72,13 @@ const TeamDashboard = ({ user, onNavigate }) => {
 
   // Toggle the action menu for a student
   const toggleMenu = (studentId) => {
+    console.log('Toggle menu called for student:', studentId);
     if (activeMenu === studentId) {
       setActiveMenu(null);
     } else {
       setActiveMenu(studentId);
     }
   };
-
   // Handler for marking a student as reviewed
   const handleMarkReviewed = async (studentId) => {
     await markStudentReviewed(studentId);
@@ -56,11 +88,28 @@ const TeamDashboard = ({ user, onNavigate }) => {
 
   // Handler for adding a note for a student
   const handleAddNote = (student) => {
+    // Make sure we have the necessary student data
+    if (!student || !student.id || !student.name) {
+      console.error('Cannot add note: Missing student data', student);
+      return;
+    }
+    
+    console.log('Adding note for student:', student.name, student.id);
+    
     // Store the selected student in context
-    selectStudent(student);
+    selectStudent({
+      id: student.id,
+      name: student.name,
+      grade: student.grade || '',
+      photo: student.photo || ''
+    });
+    
+    // Close the menu
+    setActiveMenu(null);
     
     // Navigate to incidents page
     if (onNavigate) {
+      console.log('Navigating to incidents page');
       onNavigate('incidents');
     }
   };
@@ -160,10 +209,13 @@ const TeamDashboard = ({ user, onNavigate }) => {
       title: 'Actions',
       render: (item) => (
         <div className="actions-cell">
-          <div className="menu-container">
+          <div className="menu-container" ref={item.id === activeMenu ? menuRef : null}>
             <IconButton 
               title="Open menu"
-              onClick={() => toggleMenu(item.id)}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent event bubbling
+                toggleMenu(item.id);
+              }}
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="1"></circle>
@@ -175,35 +227,36 @@ const TeamDashboard = ({ user, onNavigate }) => {
             
             {activeMenu === item.id && (
               <div className="dropdown-menu">
-                <Button 
-                  variant="ghost"
+                <button 
                   className="menu-item" 
-                  onClick={() => handleMarkReviewed(item.id)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent event bubbling
+                    handleMarkReviewed(item.id);
+                  }}
                   disabled={actionStatus.loading}
-                  icon={
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 11l3 3L22 4"></path>
-                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                    </svg>
-                  }
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
                   Reviewed today
-                </Button>
+                </button>
                 
-                <Button 
-                  variant="ghost"
+                <button 
                   className="menu-item" 
-                  onClick={() => handleAddNote(item._fullData)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent event bubbling
+                    console.log('Add note clicked for student:', item.id);
+                    handleAddNote(item._fullData);
+                  }}
                   disabled={actionStatus.loading}
-                  icon={
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                  }
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
                   Add note
-                </Button>
+                </button>
               </div>
             )}
           </div>

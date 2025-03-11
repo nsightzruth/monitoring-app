@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 /**
  * Custom hook for handling form state and validation
@@ -15,6 +15,12 @@ export const useForm = (initialValues = {}, validate = () => ({}), onSubmit = ()
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState('');
+  
+  // Use refs to prevent infinite loops
+  const validationInProgress = useRef(false);
+  const latestValues = useRef(values);
+  const latestTouched = useRef(touched);
+  const prevErrors = useRef({});
 
   /**
    * Handle input change
@@ -34,25 +40,37 @@ export const useForm = (initialValues = {}, validate = () => ({}), onSubmit = ()
       }));
       
       // Mark field as touched
-      setTouched(prev => ({
-        ...prev,
-        [name]: true
-      }));
+      setTouched(prev => {
+        const newTouched = {
+          ...prev,
+          [name]: true
+        };
+        latestTouched.current = newTouched;
+        return newTouched;
+      });
     } else {
       // Called as handleChange(event)
       const { name, value, type, checked } = eventOrName.target;
       
-      setValues(prev => ({
-        ...prev,
-        // Handle checkboxes differently
-        [name]: type === 'checkbox' ? checked : value
-      }));
+      setValues(prev => {
+        const newValues = {
+          ...prev,
+          // Handle checkboxes differently
+          [name]: type === 'checkbox' ? checked : value
+        };
+        latestValues.current = newValues;
+        return newValues;
+      });
       
       // Mark field as touched
-      setTouched(prev => ({
-        ...prev,
-        [name]: true
-      }));
+      setTouched(prev => {
+        const newTouched = {
+          ...prev,
+          [name]: true
+        };
+        latestTouched.current = newTouched;
+        return newTouched;
+      });
     }
   }, []);
 
@@ -64,15 +82,44 @@ export const useForm = (initialValues = {}, validate = () => ({}), onSubmit = ()
     const { name } = e.target;
     
     // Mark field as touched
-    setTouched(prev => ({
-      ...prev,
-      [name]: true
-    }));
+    setTouched(prev => {
+      const newTouched = {
+        ...prev,
+        [name]: true
+      };
+      latestTouched.current = newTouched;
+      return newTouched;
+    });
     
-    // Validate single field
-    const validationErrors = validate(values);
-    setErrors(validationErrors);
-  }, [values, validate]);
+    // Run validation for this field only
+    if (!validationInProgress.current) {
+      validationInProgress.current = true;
+      
+      try {
+        const validationErrors = validate(latestValues.current);
+        
+        if (validationErrors[name]) {
+          setErrors(prev => {
+            const newErrors = {
+              ...prev,
+              [name]: validationErrors[name]
+            };
+            prevErrors.current = newErrors;
+            return newErrors;
+          });
+        } else if (prevErrors.current[name]) {
+          setErrors(prev => {
+            const newErrors = {...prev};
+            delete newErrors[name];
+            prevErrors.current = newErrors;
+            return newErrors;
+          });
+        }
+      } finally {
+        validationInProgress.current = false;
+      }
+    }
+  }, [validate]);
   
   /**
    * Handle form submission
@@ -88,10 +135,12 @@ export const useForm = (initialValues = {}, validate = () => ({}), onSubmit = ()
     }, {});
     
     setTouched(allTouched);
+    latestTouched.current = allTouched;
     
     // Validate all fields
     const validationErrors = validate(values);
     setErrors(validationErrors);
+    prevErrors.current = validationErrors;
     
     // Check if there are any errors
     if (Object.keys(validationErrors).length === 0) {
@@ -115,8 +164,11 @@ export const useForm = (initialValues = {}, validate = () => ({}), onSubmit = ()
    */
   const resetForm = useCallback(() => {
     setValues(initialValues);
+    latestValues.current = initialValues;
     setErrors({});
+    prevErrors.current = {};
     setTouched({});
+    latestTouched.current = {};
     setIsSubmitting(false);
     setSubmitError('');
     setSubmitSuccess('');
@@ -124,29 +176,64 @@ export const useForm = (initialValues = {}, validate = () => ({}), onSubmit = ()
   
   /**
    * Set form values programmatically
-   * @param {Object} newValues - New form values
+   * @param {Object|Function} newValues - New form values or updater function
    */
   const setFormValues = useCallback((newValues) => {
-    setValues(prev => ({
-      ...prev,
-      ...newValues
-    }));
+    setValues(prev => {
+      const updatedValues = typeof newValues === 'function' 
+        ? newValues(prev) 
+        : { ...prev, ...newValues };
+      
+      // Update the latestValues ref
+      latestValues.current = updatedValues;
+      return updatedValues;
+    });
   }, []);
   
-  // Run validation when values change
+  // Update latestValues ref when values change
   useEffect(() => {
-    // Only validate touched fields
-    const touchedErrors = {};
-    const validationErrors = validate(values);
-    
-    Object.keys(touched).forEach(key => {
-      if (touched[key] && validationErrors[key]) {
-        touchedErrors[key] = validationErrors[key];
+    latestValues.current = values;
+  }, [values]);
+  
+  // Update latestTouched ref when touched changes
+  useEffect(() => {
+    latestTouched.current = touched;
+  }, [touched]);
+  
+  // Prevent infinite loops and unnecessary error state updates
+  useEffect(() => {
+    // Run validation when component mounts to initialize errors
+    if (!validationInProgress.current) {
+      validationInProgress.current = true;
+      
+      try {
+        const allErrors = validate(values);
+        const touchedErrors = {};
+        
+        // Only set errors for touched fields
+        Object.keys(touched).forEach(key => {
+          if (touched[key] && allErrors[key]) {
+            touchedErrors[key] = allErrors[key];
+          }
+        });
+        
+        // Only update errors if they've actually changed
+        const touchedErrorKeys = Object.keys(touchedErrors);
+        const prevErrorKeys = Object.keys(prevErrors.current);
+        
+        if (
+          touchedErrorKeys.length !== prevErrorKeys.length ||
+          touchedErrorKeys.some(key => touchedErrors[key] !== prevErrors.current[key]) ||
+          prevErrorKeys.some(key => !touchedErrors[key])
+        ) {
+          setErrors(touchedErrors);
+          prevErrors.current = touchedErrors;
+        }
+      } finally {
+        validationInProgress.current = false;
       }
-    });
-    
-    setErrors(touchedErrors);
-  }, [values, touched, validate]);
+    }
+  }, [validate]); // Run only on mount
   
   return {
     values,
