@@ -1,0 +1,55 @@
+.followups-table td {
+    vertical-align: middle;
+  }
+  
+  .truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  
+  .student-grade {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: normal;
+  }
+  
+  .note-cell {
+    max-width: 300px;
+    white-space: pre-line;
+  }
+  
+  .no-notes {
+    color: #b8c2cc;
+    font-style: italic;
+  }
+  
+  /* Type badge styling */
+  .type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  
+  .type-badge.intervention {
+    background-color: var(--tertiary-color);
+    color: var(--primary-color);
+  }
+  
+  .type-badge.parent-communication {
+    background-color: var(--warning-color);
+    color: var(--dark-text);
+  }
+  
+  .type-badge.psychologist {
+    background-color: var(--secondary-color);
+    color: var(--light-text);
+  }
+  
+  .type-badge.test {
+    background-color: var(--primary-color);
+    color: var(--light-text);

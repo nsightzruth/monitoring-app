@@ -1,0 +1,125 @@
+.followup-form-container {
+    width: 100%;
+  }
+  
+  .followup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  /* Inline form group style for student name */
+  .inline-form-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .inline-form-group label {
+    flex: 0 0 120px;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  
+  .student-search-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Intervention section */
+  .intervention-section {
+    background-color: rgba(68, 188, 204, 0.1);
+    border: 1px solid var(--tertiary-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .intervention-section h3 {
+    color: var(--secondary-color);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+  
+  /* Textarea container */
+  .textarea-container {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .textarea-container label {
+    flex: 0 0 120px;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  
+  .textarea-field-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .followup-notes-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    line-height: 1.5;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    resize: vertical;
+  }
+  
+  .followup-notes-textarea:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 2px rgba(10, 123, 131, 0.2);
+  }
+  
+  .followup-notes-textarea:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  
+  .view-mode-banner {
+    background-color: var(--tertiary-color);
+    color: var(--primary-color);
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-align: center;
+  }
+  
+  .edit-mode-banner {
+    background-color: var(--warning-color);
+    color: var(--primary-color);
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-align: center;
+  }
+  
+  .form-error {
+    color: var(--error-color);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 640px) {
+    .inline-form-group, .textarea-container {
+      flex-direction: column;
+    }
+    
+    .inline-form-group label, .textarea-container label {
+      margin-bottom: 0.5rem;
+    }
+  }

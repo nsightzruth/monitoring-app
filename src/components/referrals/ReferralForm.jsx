@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from '../../hooks/useForm';
 import { createValidator, isEmpty } from '../../utils/validation';
+import { useStudentData } from '../../context/StudentDataContext';
 import Form, { FormRow, FormActions } from '../common/Form';
 import FormMessage from '../common/Form';
 import Select from '../common/Select';
@@ -32,10 +33,15 @@ const REFERRAL_REASONS = [
   { value: 'Other', label: 'Other' }
 ];
 
+
 /**
  * Component for submitting new referrals
  */
 const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
+
+  
+  // Access student context to find if there's a pre-selected student
+  const { selectedStudent, clearSelectedStudent } = useStudentData();
   // Track if we're in view mode (viewing existing referral)
   const [viewMode, setViewMode] = useState(false);
   // Track if the student is valid (exists in the database)
@@ -97,6 +103,21 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
     }
   );
 
+  // Use pre-selected student if available (from team dashboard)
+  useEffect(() => {
+    if (selectedStudent && !referralToView) {
+      setFormValues(prevData => ({
+        ...prevData,
+        studentName: selectedStudent.name || '',
+        studentId: selectedStudent.id || ''
+      }));
+      setValidStudent(true);
+      
+      // Clear the selected student from context after using it
+      clearSelectedStudent();
+    }
+  }, [selectedStudent, clearSelectedStudent, referralToView, setFormValues]);
+
   // Update form when referralToView changes
   useEffect(() => {
     if (referralToView) {
@@ -111,9 +132,12 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
       setValidStudent(true);
     } else {
       setViewMode(false);
-      setValidStudent(false);
+      // Only reset valid student if it's not prefilled from context
+      if (!selectedStudent) {
+        setValidStudent(false);
+      }
     }
-  }, [referralToView, setFormValues]);
+  }, [referralToView, setFormValues, selectedStudent]);
 
   // Handle student selection from the dropdown
   const handleStudentSelect = (student) => {

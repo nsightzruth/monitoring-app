@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useStudent } from '../../hooks/useStudent';
+import { useStudentData } from '../../context/StudentDataContext';
 import '../../styles/components/StudentSearch.css';
 
 /**
@@ -14,7 +14,8 @@ const StudentSearch = ({
   placeholder = "Enter student's full name (min 3 characters)",
   className = ''
 }) => {
-  const { loading, students, searchStudents } = useStudent();
+  // Use the StudentDataContext instead of the useStudent hook
+  const { searchStudents, searchResults, isSearching } = useStudentData();
   const [inputValue, setInputValue] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
   
@@ -91,7 +92,7 @@ const StudentSearch = ({
         type="text"
         value={inputValue}
         onChange={handleInputChange}
-        onFocus={() => inputValue.length >= 3 && students.length > 0 && setShowSuggestions(true)}
+        onFocus={() => inputValue.length >= 3 && searchResults.length > 0 && setShowSuggestions(true)}
         placeholder={placeholder}
         disabled={disabled}
         required={required}
@@ -100,15 +101,15 @@ const StudentSearch = ({
         aria-label="Search for student"
       />
       
-      {loading && (
+      {isSearching && (
         <div className="search-indicator">
           Searching...
         </div>
       )}
       
-      {showSuggestions && students.length > 0 && (
+      {showSuggestions && searchResults.length > 0 && (
         <ul className="suggestions-list" ref={suggestionsRef}>
-          {students.map(student => (
+          {searchResults.map(student => (
             <li 
               key={student.id}
               onClick={() => handleStudentSelect(student)}

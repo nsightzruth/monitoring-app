@@ -6,6 +6,7 @@ import ReferralPage from './pages/ReferralPage';
 import AdminPage from './pages/AdminPage';
 import TeamDashboard from './pages/TeamDashboard';
 import IncidentNotePage from './pages/IncidentNotePage';
+import FollowupPage from './pages/FollowupPage'; // Import the new FollowupPage
 import Navigation from './components/layout/Navigation';
 import './styles/App.css';
 
@@ -72,6 +73,8 @@ function App() {
         return <TeamDashboard user={user} onNavigate={handleNavigation} />;
       case 'incidents':
         return <IncidentNotePage user={user} />;
+      case 'followups': // Add the new followups case
+        return <FollowupPage user={user} />;
       case 'referrals':
       default:
         return <ReferralPage user={user} />;

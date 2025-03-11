@@ -59,6 +59,12 @@ const Navigation = ({ user, currentPage, onNavigation, onLogout }) => {
                 Incidents & Notes
               </button>
               <button 
+                className={`nav-link ${currentPage === 'followups' ? 'active' : ''}`}
+                onClick={() => handleNavClick('followups')}
+              >
+                Followups
+              </button>
+              <button 
                 className={`nav-link ${currentPage === 'teams' ? 'active' : ''}`}
                 onClick={() => handleNavClick('teams')}
               >

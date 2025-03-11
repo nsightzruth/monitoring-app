@@ -5,6 +5,7 @@ import { referralService } from './referral-service';
 import { teamService } from './team-service';
 import { incidentService } from './incident-service';
 import { adminService } from './admin-service';
+import { followupService } from './followup-service';
 
 // Export all services
 export {
@@ -14,5 +15,6 @@ export {
   referralService,
   teamService,
   incidentService,
-  adminService
+  adminService,
+  followupService
 };
