@@ -123,6 +123,40 @@ export const useIncidents = (staffId) => {
   }, []);
 
   /**
+   * Get draft incidents and notes for the current staff member
+   * @returns {Promise<Array>} - Array of draft incident/note records
+   */
+  const getDraftsByStaff = useCallback(async () => {
+    try {
+      return await incidentService.getDraftsByStaff(staffId);
+    } catch (err) {
+      console.error('Error fetching drafts:', err);
+      return [];
+    }
+  }, [staffId]);
+
+  /**
+   * Delete an incident or note
+   * @param {string} recordId - ID of the record to delete
+   * @returns {Promise<boolean>} - Whether the deletion was successful
+   */
+  const deleteIncident = useCallback(async (recordId) => {
+    try {
+      await incidentService.deleteIncident(recordId);
+      
+      // Remove the deleted record from state
+      setRecords(prevRecords => 
+        prevRecords.filter(record => record.id !== recordId)
+      );
+      
+      return true;
+    } catch (err) {
+      console.error('Error deleting record:', err);
+      return false;
+    }
+  }, []);
+  
+  /**
    * Get incidents and notes for a specific student
    * @param {string} studentId - Student ID
    * @returns {Promise<Array>} - Array of incident/note records
@@ -146,9 +180,11 @@ export const useIncidents = (staffId) => {
     fetchIncidents,
     addIncident,
     editIncident,
+    deleteIncident,
     viewRecord,
     resetCurrentRecord,
     resetSubmitStatus,
-    getStudentIncidents
+    getStudentIncidents,
+    getDraftsByStaff
   };
 };

@@ -15,6 +15,7 @@ import '../../styles/components/IncidentNotesTable.css';
 const IncidentNotesTable = ({ records, onView, onEdit, loading }) => {
   // Format notes based on record type
   const formatNotes = (record) => {
+    // Create the note content
     if (record.type === 'Incident') {
       // Format for incidents: Offense at Location - Note
       return (

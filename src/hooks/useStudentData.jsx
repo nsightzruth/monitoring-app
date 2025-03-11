@@ -128,6 +128,7 @@ export const useStudentData = (supabase, user, selectedTeam) => {
         .from('IncidentsNotes')
         .select('id, student_id, type, location, offense, note, date, time, created_at')
         .in('student_id', studentIds)
+        .eq('draft_status', false) // Exclude draft notes
         .order('date', { ascending: false });
         
       if (incidentsError) throw incidentsError;
