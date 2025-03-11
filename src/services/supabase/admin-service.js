@@ -5,6 +5,37 @@ import { supabase } from './config';
  */
 export const adminService = {
   /**
+   * Check if a user is an admin
+   * @param {string} userId - The user ID to check
+   * @returns {Promise<boolean>} - Whether the user is an admin
+   */
+  isAdmin: async (userId) => {
+    if (!userId) return false;
+    
+    try {
+      console.log('Checking admin status for user:', userId);
+      
+      const { data, error } = await supabase
+        .from('Staff')
+        .select('is_admin')
+        .eq('id', userId)
+        .single();
+        
+      if (error) {
+        console.error('Error checking admin status:', error);
+        return false;
+      }
+      
+      console.log('Admin check result:', data);
+      
+      return data && data.is_admin === true;
+    } catch (error) {
+      console.error('Unexpected error checking admin status:', error);
+      return false;
+    }
+  },
+
+  /**
    * Get data from a specific table
    * @param {string} tableName - Table name
    * @returns {Promise<Array>} - Array of records from the table
@@ -139,17 +170,16 @@ export const adminService = {
    */
   setupAdminTables: async () => {
     try {
-      // Check if Staff table already has is_admin column
-      const { data: columnExists, error: columnError } = await supabase
-        .rpc('check_column_exists', { 
-          table_name: 'Staff', 
-          column_name: 'is_admin' 
-        });
+      // Check if Staff table has is_admin column
+      const { data: staffColumns, error: columnsError } = await supabase
+        .rpc('get_table_columns', { table_name: 'Staff' });
       
-      if (columnError) {
-        console.error('Error checking if column exists:', columnError);
-        return;
+      if (columnsError) {
+        console.error('Error checking table columns:', columnsError);
+        return { error: columnsError.message };
       }
+      
+      const hasIsAdminColumn = staffColumns.some(col => col.column_name === 'is_admin');
       
       // Then check if any admin user exists
       const { data: adminExists, error: adminError } = await supabase
@@ -160,16 +190,16 @@ export const adminService = {
         
       if (adminError) {
         console.error('Error checking for admin users:', adminError);
-        return;
+        return { error: adminError.message };
       }
       
       return {
-        columnExists,
+        hasIsAdminColumn,
         adminExists: adminExists && adminExists.length > 0
       };
     } catch (error) {
       console.error('Error setting up admin tables:', error);
-      throw error;
+      return { error: error.message };
     }
   }
-};
+}

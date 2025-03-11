@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { authService } from './services/supabase';
+import { supabase, authService } from './services/supabase';
 import { StudentDataProvider } from './context/StudentDataContext';
 import AuthPage from './pages/AuthPage';
 import ReferralPage from './pages/ReferralPage';
@@ -67,7 +67,7 @@ function App() {
 
     switch (currentPage) {
       case 'admin':
-        return <AdminPage user={user} />;
+        return <AdminPage user={user} supabase={supabase} />;
       case 'teams':
         return <TeamDashboard user={user} onNavigate={handleNavigation} />;
       case 'incidents':

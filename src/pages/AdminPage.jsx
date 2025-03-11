@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { adminService } from '../services/supabase';
 import '../styles/AdminPage.css';
 
 const TABLES = {
@@ -15,6 +16,7 @@ const TABLE_SCHEMAS = {
     { name: 'id', type: 'uuid', primaryKey: true, editable: false },
     { name: 'name', type: 'text', required: true },
     { name: 'email', type: 'varchar', required: true },
+    { name: 'is_admin', type: 'bool', required: false },
     { name: 'created_at', type: 'timestamp', editable: false },
     { name: 'updated_at', type: 'timestamp', editable: false }
   ],
@@ -75,7 +77,14 @@ const AdminPage = ({ user, supabase }) => {
   // Check if user is an admin
   useEffect(() => {
     const checkAdminRole = async () => {
+      if (!user || !supabase) {
+        setIsAdmin(false);
+        return;
+      }
+
       try {
+        console.log('Checking admin role for user ID:', user.id);
+        
         // Get user roles or check a specific admin flag
         const { data, error } = await supabase
           .from('Staff')
@@ -83,11 +92,15 @@ const AdminPage = ({ user, supabase }) => {
           .eq('id', user.id)
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching admin status:', error);
+          throw error;
+        }
         
-        // For development, setting all users as admin
-        // In production, you'd want to properly check this
-        setIsAdmin(true); // Replace with data.is_admin in production
+        console.log('Admin status result:', data);
+        
+        // Use the actual admin status from the database
+        setIsAdmin(data?.is_admin === true);
       } catch (err) {
         console.error('Error checking admin role:', err);
         setIsAdmin(false);
@@ -99,11 +112,11 @@ const AdminPage = ({ user, supabase }) => {
 
   // Fetch table data when active table changes
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && supabase) {
       fetchTableData();
       fetchRelationData();
     }
-  }, [activeTable, isAdmin]);
+  }, [activeTable, isAdmin, supabase]);
 
   // Reset form data when switching modes
   useEffect(() => {
@@ -120,6 +133,8 @@ const AdminPage = ({ user, supabase }) => {
   }, [mode, activeTable]);
 
   const fetchTableData = async () => {
+    if (!supabase) return;
+    
     try {
       setLoading(true);
       setError(null);
@@ -141,6 +156,8 @@ const AdminPage = ({ user, supabase }) => {
   };
 
   const fetchRelationData = async () => {
+    if (!supabase) return;
+    
     const relationData = {};
     
     try {
@@ -293,6 +310,25 @@ const AdminPage = ({ user, supabase }) => {
       );
     }
     
+    // For boolean fields
+    if (field.type === 'bool') {
+      return (
+        <div className="form-group" key={field.name}>
+          <label htmlFor={field.name} className="checkbox-label">
+            <input
+              type="checkbox"
+              id={field.name}
+              name={field.name}
+              checked={formData[field.name] || false}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.checked }))}
+              disabled={disabled}
+            />
+            {field.name.replace('_', ' ')}
+          </label>
+        </div>
+      );
+    }
+    
     // For text, varchar, uuid fields
     if (field.type === 'text' || field.type === 'varchar' || field.type === 'uuid') {
       return (
@@ -371,6 +407,8 @@ const AdminPage = ({ user, supabase }) => {
                       <td key={field.name}>
                         {field.type === 'timestamp' && item[field.name] 
                           ? new Date(item[field.name]).toLocaleString() 
+                          : field.type === 'bool'
+                          ? String(item[field.name] || false)
                           : String(item[field.name] || '')}
                       </td>
                     ))}
@@ -429,6 +467,7 @@ const AdminPage = ({ user, supabase }) => {
       <section className="admin-section">
         <h2>Access Denied</h2>
         <p>You do not have permission to access the admin area.</p>
+        <p>User ID: {user?.id}</p>
       </section>
     );
   }
