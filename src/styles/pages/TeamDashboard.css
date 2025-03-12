@@ -97,26 +97,13 @@
   background-color: var(--light-bg);
   color: var(--primary-color);
 }
-  
-/* Notes and followups styling */
+
+/* Notes styling */
 .notes-cell {
   max-width: 300px;
   white-space: pre-line;
 }
-  
-.notes-cell p {
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px dashed #eaedf0;
-}
-  
-.notes-cell p:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-  
-/* Add truncated note styling */
+
 .truncate-note {
   white-space: nowrap;
   overflow: hidden;
@@ -131,6 +118,92 @@
 .no-notes {
   color: #b8c2cc;
   font-style: italic;
+}
+  
+/* Followups column styling */
+.followups-cell {
+  max-width: 250px;
+}
+
+.followups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.followup-item {
+  line-height: 1.3;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.followup-content {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.followup-type {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.followup-type.intervention {
+  background-color: var(--tertiary-color);
+  color: var(--primary-color);
+}
+
+.followup-type.parent-communication {
+  background-color: var(--warning-color);
+  color: var(--dark-text);
+}
+
+.followup-type.psychologist {
+  background-color: var(--secondary-color);
+  color: var(--light-text);
+}
+
+.followup-type.test {
+  background-color: var(--primary-color);
+  color: var(--light-text);
+}
+
+.followup-type.other {
+  background-color: #808080;
+  color: white;
+}
+
+.followup-details {
+  font-size: 0.85rem;
+  margin-left: 0.25rem;
+}
+
+.responsible-person-cell {
+  max-width: 150px;
+}
+
+.responsible-persons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.responsible-person-item {
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.no-followups {
+  color: #b8c2cc;
+  font-style: italic;
+  font-size: 0.85rem;
 }
   
 /* Action menu styling */

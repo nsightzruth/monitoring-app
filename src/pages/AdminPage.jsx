@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { adminService } from '../services/supabase';
-import '../styles/AdminPage.css';
+import '../styles/pages/AdminPage.css';
 
 const TABLES = {
   STAFF: 'Staff',

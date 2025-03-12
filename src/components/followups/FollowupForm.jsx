@@ -113,7 +113,7 @@ const FollowupForm = ({
     {
       studentName: '',
       studentId: '',
-      type: FOLLOWUP_TYPES[0].value,
+      type: FOLLOWUP_TYPES[3].value, // Index 3 corresponds to 'Test'
       responsiblePerson: '',
       followupNotes: '',
       intervention: '',

@@ -16,6 +16,7 @@ export const useFollowups = (staffId) => {
   const [submitStatus, setSubmitStatus] = useState({ loading: false, error: null, success: false });
   const [editMode, setEditMode] = useState(false);
   const [filterStatus, setFilterStatus] = useState('Active');
+  const [pendingStatusChanges, setPendingStatusChanges] = useState({});
 
   // Fetch followups when staffId or filterStatus changes
   useEffect(() => {
@@ -33,7 +34,8 @@ export const useFollowups = (staffId) => {
       setLoading(true);
       setError(null);
       
-      const data = await followupService.getFollowupsByStaff(staffId, filterStatus);
+      // Get followups where the current user is the responsible person
+      const data = await followupService.getFollowupsByResponsiblePerson(staffId, filterStatus);
       setFollowups(data);
     } catch (err) {
       console.error('Error fetching followups:', err);
@@ -192,6 +194,59 @@ export const useFollowups = (staffId) => {
     setFilterStatus(status);
   }, []);
 
+  /**
+     * Toggle a followup's status in the pending changes
+     * @param {string} followupId - ID of the followup to toggle
+     * @param {boolean} checked - Whether the checkbox is checked
+     */
+  const toggleFollowupStatus = useCallback((followupId, checked) => {
+    setPendingStatusChanges(prev => ({
+      ...prev,
+      [followupId]: checked ? 'Completed' : 'Active'
+    }));
+  }, []);
+
+  /**
+   * Save all pending status changes
+   * @returns {Promise<Object>} - Result of the operation
+   */
+  const savePendingStatusChanges = useCallback(async () => {
+    try {
+      setSubmitStatus({ loading: true, error: null, success: false });
+      
+      // Prepare the updates
+      const updates = Object.entries(pendingStatusChanges).map(([id, status]) => ({
+        id,
+        status
+      }));
+      
+      // Skip if there are no updates
+      if (updates.length === 0) {
+        setSubmitStatus({ loading: false, error: null, success: true });
+        return { success: true, data: [] };
+      }
+      
+      const result = await followupService.updateFollowupStatuses(updates);
+      
+      if (result.success) {
+        // Clear pending changes
+        setPendingStatusChanges({});
+        
+        // Refresh the followups list
+        await fetchFollowups();
+        
+        setSubmitStatus({ loading: false, error: null, success: true });
+        return result;
+      } else {
+        throw new Error(result.error || 'Failed to update followup statuses');
+      }
+    } catch (err) {
+      console.error('Error saving status changes:', err);
+      setSubmitStatus({ loading: false, error: err.message, success: false });
+      return { success: false, error: err.message };
+    }
+  }, [pendingStatusChanges, fetchFollowups]);
+
   return {
     followups,
     currentFollowup,
@@ -201,6 +256,7 @@ export const useFollowups = (staffId) => {
     submitStatus,
     editMode,
     filterStatus,
+    pendingStatusChanges,
     fetchFollowups,
     addFollowup,
     updateFollowup,
@@ -209,6 +265,8 @@ export const useFollowups = (staffId) => {
     viewFollowup,
     resetCurrentFollowup,
     resetSubmitStatus,
-    changeFilterStatus
+    changeFilterStatus,
+    toggleFollowupStatus,
+    savePendingStatusChanges
   };
 };

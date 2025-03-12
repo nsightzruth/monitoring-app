@@ -5,12 +5,55 @@ import { supabase } from './config';
  */
 export const followupService = {
   /**
-   * Get followups for the current staff member
+   * Get followups where the staff member is mentioned
    * @param {string} staffId - Staff ID
    * @param {string} status - Filter by status (optional)
    * @returns {Promise<Array>} - Array of followup objects
    */
   getFollowupsByStaff: async (staffId, status = null) => {
+    try {
+      let query = supabase
+        .from('Followup')
+        .select(`
+          id, type, intervention, metric, start_date, end_date, 
+          followup_notes, created_at, updated_at, student_id, 
+          responsible_person, followup_status,
+          Student:student_id (name, grade),
+          Staff:responsible_person (name)
+        `);
+      
+      // Filter by status if provided
+      if (status) {
+        query = query.eq('followup_status', status);
+      }
+      
+      // Execute the query
+      const { data, error } = await query.order('updated_at', { ascending: false });
+          
+      if (error) throw error;
+      
+      // Format the data to include student and staff name
+      const formattedData = data.map(record => ({
+        ...record,
+        student_name: record.Student?.name || 'Unknown Student',
+        grade: record.Student?.grade || '',
+        responsible_person_name: record.Staff?.name || 'Unassigned',
+      }));
+      
+      return formattedData || [];
+    } catch (error) {
+      console.error('Error fetching followups:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get followups where the staff member is the responsible person
+   * @param {string} staffId - Staff ID
+   * @param {string} status - Filter by status (optional)
+   * @returns {Promise<Array>} - Array of followup objects
+   */
+  getFollowupsByResponsiblePerson: async (staffId, status = null) => {
     try {
       let query = supabase
         .from('Followup')
@@ -27,6 +70,9 @@ export const followupService = {
       if (status) {
         query = query.eq('followup_status', status);
       }
+      
+      // Also filter out deleted followups
+      query = query.neq('followup_status', 'Deleted');
       
       // Execute the query
       const { data, error } = await query.order('updated_at', { ascending: false });
@@ -118,6 +164,9 @@ export const followupService = {
       if (status) {
         query = query.eq('followup_status', status);
       }
+
+      // Filter out deleted followups
+      query = query.neq('followup_status', 'Deleted');
       
       // Execute the query
       const { data, error } = await query.order('updated_at', { ascending: false });
@@ -318,22 +367,60 @@ export const followupService = {
   },
 
   /**
-   * Delete a followup
-   * @param {string} followupId - Followup ID
-   * @returns {Promise<boolean>} - Success status
-   */
+     * Mark a followup as deleted
+     * @param {string} followupId - Followup ID
+     * @returns {Promise<boolean>} - Success status
+     */
   deleteFollowup: async (followupId) => {
     try {
       const { error } = await supabase
         .from('Followup')
-        .delete()
+        .update({ 
+          followup_status: 'Deleted',
+          updated_at: new Date().toISOString()
+        })
         .eq('id', followupId);
           
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error deleting followup:', error);
+      console.error('Error marking followup as deleted:', error);
       return false;
+    }
+  },
+
+  /**
+   * Update the status of multiple followups
+   * @param {Array<Object>} statusUpdates - Array of { id, status } objects
+   * @returns {Promise<Object>} - Result with success and data
+   */
+  updateFollowupStatuses: async (statusUpdates) => {
+    try {
+      const results = [];
+      const now = new Date().toISOString();
+      
+      // Process updates in batches
+      for (const update of statusUpdates) {
+        const { data, error } = await supabase
+          .from('Followup')
+          .update({ 
+            followup_status: update.status,
+            updated_at: now
+          })
+          .eq('id', update.id)
+          .select();
+          
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          results.push(data[0]);
+        }
+      }
+      
+      return { success: true, data: results };
+    } catch (error) {
+      console.error('Error updating followup statuses:', error);
+      return { success: false, error: error.message };
     }
   },
 

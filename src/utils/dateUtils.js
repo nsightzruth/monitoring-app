@@ -6,7 +6,7 @@ import { format, parseISO } from 'date-fns';
  * @param {string} formatString - Format string for date-fns
  * @returns {string} - Formatted date string in local timezone
  */
-export const formatLocalDate = (dateValue, formatString = 'MMM d, yyyy') => {
+export const formatLocalDate = (dateValue, formatString = 'MMM dd yyyy') => {
   if (!dateValue) return '';
   
   try {
@@ -28,7 +28,7 @@ export const formatLocalDate = (dateValue, formatString = 'MMM d, yyyy') => {
  * @param {string} formatString - Format string for date-fns
  * @returns {string} - Formatted date and time string in local timezone
  */
-export const formatLocalDateTime = (dateValue, timeValue, formatString = 'MMM d, yyyy h:mm a') => {
+export const formatLocalDateTime = (dateValue, timeValue, formatString = 'MMM dd yyyy h:mm a') => {
   if (!dateValue) return '';
   
   try {

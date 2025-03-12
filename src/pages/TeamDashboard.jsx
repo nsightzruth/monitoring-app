@@ -1,13 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTeams } from '../hooks/useTeams';
 import { useStudentData } from '../context/StudentDataContext'
-// import { useStudent } from '../hooks/useStudent';
 import Select from '../components/common/Select';
 import Table from '../components/common/Table';
-import Button from '../components/common/Button';
 import { IconButton } from '../components/common/Button';
 import FormMessage from '../components/common/Form';
 import '../styles/pages/TeamDashboard.css';
+import { formatLocalDate } from '../utils/dateUtils';
 
 /**
  * Page component for team dashboard
@@ -138,6 +137,7 @@ const TeamDashboard = ({ user, onNavigate }) => {
         : 'N/A',
       notes: data.notes || '',
       lastReview: data.lastReview || 'Never',
+      followups: data.followups || [],
       // Include the full student data for the action menu
       _fullData: { ...student, ...data }
     };
@@ -181,11 +181,7 @@ const TeamDashboard = ({ user, onNavigate }) => {
       key: 'referralType',
       title: 'Referral Type'
     },
-    {
-      key: 'referralReason',
-      title: 'Referral Reason'
-    },
-    {
+        {
       key: 'notes',
       title: 'Notes',
       render: (item) => (
@@ -199,6 +195,69 @@ const TeamDashboard = ({ user, onNavigate }) => {
           )}
         </div>
       )
+    },
+    {
+      key: 'followups',
+      title: 'Latest Followup',
+      render: (item) => {
+        // Get only the latest active followup
+        const latestFollowup = item.followups && item.followups.length > 0 ? 
+          item.followups.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0] : null;
+          
+        if (!latestFollowup) {
+          return <span className="no-followups">No active followups</span>;
+        }
+        
+        // Format the date
+        const updatedDate = formatLocalDate(latestFollowup.updated_at);
+        
+        // Format based on followup type
+        if (latestFollowup.type === 'Intervention') {
+          return (
+            <div className="followup-item">
+              <span className={`followup-type ${latestFollowup.type.toLowerCase().replace(/\s+/g, '-')}`}>
+                {latestFollowup.type}
+              </span>
+              <div className="followup-content">
+                {updatedDate} - {latestFollowup.intervention} measured by {latestFollowup.metric}
+                {latestFollowup.start_date && latestFollowup.end_date && 
+                  ` ${formatLocalDate(latestFollowup.start_date)} - ${formatLocalDate(latestFollowup.end_date)}`}
+                {latestFollowup.followup_notes && `: ${latestFollowup.followup_notes}`}
+              </div>
+            </div>
+          );
+        } else {
+          return (
+            <div className="followup-item">
+              <span className={`followup-type ${latestFollowup.type.toLowerCase().replace(/\s+/g, '-')}`}>
+                {latestFollowup.type}
+              </span>
+              <div className="followup-content">
+                {updatedDate} - {latestFollowup.followup_notes || 'No details provided'}
+              </div>
+            </div>
+          );
+        }
+      }
+    },
+    {
+      key: 'responsiblePerson',
+      title: 'Responsible Person',
+      render: (item) => {
+        // Get only the latest active followup
+        const latestFollowup = item.followups && item.followups.length > 0 ? 
+          item.followups.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0] : null;
+          
+        if (!latestFollowup) {
+          return <span className="no-followups">—</span>;
+        }
+        
+        return (
+          <div className="responsible-person-item">
+            {latestFollowup.responsible_person_name || 'Unassigned'}
+          </div>
+        );
+      }
     },
     {
       key: 'lastReview',
@@ -256,6 +315,20 @@ const TeamDashboard = ({ user, onNavigate }) => {
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                   </svg>
                   Add note
+                </button>
+
+                <button 
+                  className="menu-item" 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent event bubbling
+                    handleAddFollowup(item._fullData);
+                  }}
+                  disabled={actionStatus.loading}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                  </svg>
+                  Add followup
                 </button>
               </div>
             )}

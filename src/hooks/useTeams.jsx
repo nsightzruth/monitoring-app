@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { teamService, studentService } from '../services/supabase';
-import { incidentService } from '../services/supabase';
+import { teamService, studentService, incidentService, followupService } from '../services/supabase';
 import { formatLocalDate } from '../utils/dateUtils';
 
 /**
@@ -96,6 +95,9 @@ export const useTeams = (staffId) => {
         
         // Get student's reviews
         const studentReviews = await studentService.getStudentReviews(student.id);
+
+        // Get student's active followups
+        const studentFollowups = await followupService.getFollowupsByStudent(student.id, 'Active');
         
         // Format incidents/notes
         const formattedNotes = studentIncidents.map(incident => {
@@ -143,6 +145,7 @@ export const useTeams = (staffId) => {
           referrals: studentReferrals,
           incidents: studentIncidents,
           reviews: studentReviews,
+          followups: studentFollowups,
           notes: sortedNotes,
           lastReview: lastReviewDate,
           status: studentReferrals.length > 0 ? studentReferrals[0].status : 'Unknown'

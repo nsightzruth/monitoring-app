@@ -18,24 +18,19 @@ const FollowupPage = ({ user }) => {
     error,
     editMode,
     filterStatus,
+    pendingStatusChanges,
     addFollowup,
     updateFollowup,
-    completeFollowup,
     deleteFollowup,
     viewFollowup,
     resetCurrentFollowup,
-    changeFilterStatus
+    changeFilterStatus,
+    toggleFollowupStatus,
+    savePendingStatusChanges
   } = useFollowups(user?.id);
   
   // Student context is used to check if a student was pre-selected
   const { selectedStudent } = useStudentData();
-
-  // Filter status options
-  const statusOptions = [
-    { value: 'Active', label: 'Active Followups' },
-    { value: 'Completed', label: 'Completed Followups' },
-    { value: null, label: 'All Followups' }
-  ];
 
   // Handler for form submission
   const handleSubmitFollowup = async (formData) => {
@@ -61,19 +56,24 @@ const FollowupPage = ({ user }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Handler for completing a followup
-  const handleCompleteFollowup = async (followupId) => {
-    await completeFollowup(followupId);
-  };
-
   // Handler for deleting a followup
   const handleDeleteFollowup = async (followupId) => {
     await deleteFollowup(followupId);
   };
 
   // Handler for filter change
-  const handleFilterChange = (e) => {
-    changeFilterStatus(e.target.value === 'null' ? null : e.target.value);
+  const handleFilterChange = (newStatus) => {
+    changeFilterStatus(newStatus);
+  };
+
+  // Handler for status change
+  const handleStatusChange = (followupId, checked) => {
+    toggleFollowupStatus(followupId, checked);
+  };
+
+  // Handler for saving status changes
+  const handleSaveStatuses = async () => {
+    await savePendingStatusChanges();
   };
 
   return (
@@ -93,22 +93,6 @@ const FollowupPage = ({ user }) => {
       <section className="table-section">
         <h2>Your Followups</h2>
         
-        <div className="filter-container">
-          <label htmlFor="status-filter">Filter by status:</label>
-          <select 
-            id="status-filter"
-            className="filter-select"
-            value={filterStatus === null ? 'null' : filterStatus}
-            onChange={handleFilterChange}
-          >
-            {statusOptions.map(option => (
-              <option key={option.label} value={option.value === null ? 'null' : option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        
         {error ? (
           <p className="error-message">{error}</p>
         ) : (
@@ -116,8 +100,12 @@ const FollowupPage = ({ user }) => {
             followups={followups} 
             onView={handleViewFollowup}
             onEdit={handleEditButtonClick}
-            onComplete={handleCompleteFollowup}
             onDelete={handleDeleteFollowup}
+            pendingStatusChanges={pendingStatusChanges}
+            onStatusChange={handleStatusChange}
+            onSaveStatuses={handleSaveStatuses}
+            filterStatus={filterStatus}
+            onFilterChange={handleFilterChange}
             loading={loading}
           />
         )}

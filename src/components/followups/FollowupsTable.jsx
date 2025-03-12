@@ -1,5 +1,6 @@
 import { formatLocalDate } from '../../utils/dateUtils';
 import Table from '../common/Table';
+import Button from '../common/Button';
 import { IconButton } from '../common/Button';
 import '../../styles/components/FollowupsTable.css';
 
@@ -10,16 +11,24 @@ import '../../styles/components/FollowupsTable.css';
  * @param {Array} props.followups - Array of followup objects
  * @param {Function} props.onView - Function to call when viewing a followup
  * @param {Function} props.onEdit - Function to call when editing a followup
- * @param {Function} props.onComplete - Function to call when completing a followup
  * @param {Function} props.onDelete - Function to call when deleting a followup
+ * @param {Object} props.pendingStatusChanges - Object with pending status changes
+ * @param {Function} props.onStatusChange - Function to call when status checkbox changes
+ * @param {Function} props.onSaveStatuses - Function to call to save status changes
+ * @param {string} props.filterStatus - Current filter status
+ * @param {Function} props.onFilterChange - Function to call when filter changes
  * @param {boolean} props.loading - Whether the data is loading
  */
 const FollowupsTable = ({ 
   followups, 
   onView, 
   onEdit, 
-  onComplete, 
   onDelete, 
+  pendingStatusChanges = {},
+  onStatusChange,
+  onSaveStatuses,
+  filterStatus = 'Active',
+  onFilterChange,
   loading 
 }) => {
   // Format notes based on followup type
@@ -78,8 +87,48 @@ const FollowupsTable = ({
     }
   };
 
+  // Handle status filter change
+  const handleFilterChange = () => {
+    if (onFilterChange) {
+      onFilterChange(filterStatus === 'Active' ? 'Completed' : 'Active');
+    }
+  };
+
+  // Handle save button click
+  const handleSaveClick = () => {
+    if (onSaveStatuses) {
+      onSaveStatuses();
+    }
+  };
+
+  // Handle status checkbox change
+  const handleStatusChange = (followupId, e) => {
+    if (onStatusChange) {
+      onStatusChange(followupId, e.target.checked);
+    }
+  };
+
   // Define table columns
   const columns = [
+    {
+      key: 'status',
+      title: 'Status',
+      width: '8%',
+      render: (item) => (
+        <div className="status-checkbox-container">
+          <input
+            type="checkbox"
+            id={`status-${item.id}`}
+            checked={pendingStatusChanges[item.id] === 'Completed' || item.followup_status === 'Completed'}
+            onChange={(e) => handleStatusChange(item.id, e)}
+            className="status-checkbox"
+          />
+          <label htmlFor={`status-${item.id}`} className="status-label">
+            {pendingStatusChanges[item.id] === 'Completed' || item.followup_status === 'Completed' ? 'Done' : 'Active'}
+          </label>
+        </div>
+      )
+    },
     {
       key: 'updated_at',
       title: 'Date',
@@ -89,7 +138,7 @@ const FollowupsTable = ({
     {
       key: 'student_name',
       title: 'Student',
-      width: '20%',
+      width: '15%',
       render: (item) => (
         <div>
           {item.student_name}
@@ -100,7 +149,7 @@ const FollowupsTable = ({
     {
       key: 'type',
       title: 'Type',
-      width: '15%',
+      width: '12%',
       render: (item) => (
         <span className={getTypeBadgeClass(item.type)}>
           {item.type}
@@ -110,7 +159,7 @@ const FollowupsTable = ({
     {
       key: 'responsible_person_name',
       title: 'Responsible',
-      width: '15%'
+      width: '12%'
     },
     {
       key: 'notes',
@@ -121,7 +170,7 @@ const FollowupsTable = ({
     {
       key: 'actions',
       title: 'Actions',
-      width: '15%',
+      width: '18%',
       render: (item) => (
         <div className="action-cell">
           <IconButton 
@@ -145,16 +194,6 @@ const FollowupsTable = ({
             }
           />
           <IconButton 
-            title="Mark as complete"
-            onClick={() => handleComplete(item)}
-            icon={
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            }
-          />
-          <IconButton 
             title="Delete followup"
             onClick={() => handleDelete(item.id)}
             icon={
@@ -171,15 +210,47 @@ const FollowupsTable = ({
     }
   ];
 
+  // Count the number of pending changes
+  const pendingChangesCount = Object.keys(pendingStatusChanges).length;
+
   return (
-    <Table
-      columns={columns}
-      data={followups}
-      loading={loading}
-      emptyMessage="No followups found."
-      loadingMessage="Loading followups..."
-      className="followups-table"
-    />
+    <div className="followups-table-container">
+      <div className="table-header">
+        <div className="table-actions">
+          {pendingChangesCount > 0 && (
+            <Button 
+              variant="primary" 
+              size="sm" 
+              onClick={handleSaveClick}
+            >
+              Save {pendingChangesCount} {pendingChangesCount === 1 ? 'change' : 'changes'}
+            </Button>
+          )}
+        </div>
+        <div className="filter-toggle">
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={filterStatus === 'Completed'} 
+              onChange={handleFilterChange} 
+            />
+            <span className="slider round"></span>
+          </label>
+          <span className="toggle-label">
+            {filterStatus === 'Active' ? 'Active Followups' : 'Completed Followups'}
+          </span>
+        </div>
+      </div>
+      
+      <Table
+        columns={columns}
+        data={followups}
+        loading={loading}
+        emptyMessage={`No ${filterStatus.toLowerCase()} followups found.`}
+        loadingMessage="Loading followups..."
+        className="followups-table"
+      />
+    </div>
   );
 };
 
