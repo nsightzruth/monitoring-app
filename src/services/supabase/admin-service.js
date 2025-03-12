@@ -13,8 +13,6 @@ export const adminService = {
     if (!userId) return false;
     
     try {
-      console.log('Checking admin status for user:', userId);
-      
       const { data, error } = await supabase
         .from('Staff')
         .select('is_admin')
@@ -25,8 +23,6 @@ export const adminService = {
         console.error('Error checking admin status:', error);
         return false;
       }
-      
-      console.log('Admin check result:', data);
       
       return data && data.is_admin === true;
     } catch (error) {
@@ -162,44 +158,5 @@ export const adminService = {
       console.error('Error fetching relation data:', error);
       throw error;
     }
-  },
-
-  /**
-   * Create necessary admin-related tables if they don't exist
-   * This is useful for setting up a new Supabase instance
-   */
-  setupAdminTables: async () => {
-    try {
-      // Check if Staff table has is_admin column
-      const { data: staffColumns, error: columnsError } = await supabase
-        .rpc('get_table_columns', { table_name: 'Staff' });
-      
-      if (columnsError) {
-        console.error('Error checking table columns:', columnsError);
-        return { error: columnsError.message };
-      }
-      
-      const hasIsAdminColumn = staffColumns.some(col => col.column_name === 'is_admin');
-      
-      // Then check if any admin user exists
-      const { data: adminExists, error: adminError } = await supabase
-        .from('Staff')
-        .select('id')
-        .eq('is_admin', true)
-        .limit(1);
-        
-      if (adminError) {
-        console.error('Error checking for admin users:', adminError);
-        return { error: adminError.message };
-      }
-      
-      return {
-        hasIsAdminColumn,
-        adminExists: adminExists && adminExists.length > 0
-      };
-    } catch (error) {
-      console.error('Error setting up admin tables:', error);
-      return { error: error.message };
-    }
   }
-}
+};

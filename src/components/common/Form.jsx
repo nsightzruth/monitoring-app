@@ -3,6 +3,11 @@ import '../../styles/components/Form.css';
 
 /**
  * Form component with standardized layout and actions
+ * 
+ * @param {Object} props - Component props
+ * @param {Function} props.onSubmit - Submit handler
+ * @param {React.ReactNode} props.children - Form children
+ * @param {string} props.className - Additional CSS class
  */
 const Form = ({ children, onSubmit, className = '', ...rest }) => {
   const handleSubmit = (e) => {

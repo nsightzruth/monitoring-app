@@ -67,3 +67,32 @@ export const getCurrentTimeForInput = () => {
   const now = new Date();
   return now.toTimeString().slice(0, 5);
 };
+
+/**
+ * Format a date relative to today (today, yesterday, or formatted date)
+ * @param {string|Date} dateValue - Date string or Date object
+ * @returns {string} - Relative date string
+ */
+export const formatRelativeDate = (dateValue) => {
+  if (!dateValue) return '';
+  
+  try {
+    const date = typeof dateValue === 'string' ? parseISO(dateValue) : dateValue;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const dateToCompare = new Date(date);
+    dateToCompare.setHours(0, 0, 0, 0);
+    
+    const diffTime = today.getTime() - dateToCompare.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    
+    return format(date, 'MMM dd yyyy');
+  } catch (error) {
+    console.error('Relative date formatting error:', error, 'for date:', dateValue);
+    return String(dateValue);
+  }
+};

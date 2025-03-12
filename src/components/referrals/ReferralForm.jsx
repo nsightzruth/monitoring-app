@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { useForm } from '../../hooks/useForm';
 import { createValidator, isEmpty } from '../../utils/validation';
 import { useStudentData } from '../../context/StudentDataContext';
-import Form, { FormRow, FormActions } from '../common/Form';
-import FormMessage from '../common/Form';
-import Select from '../common/Select';
+import Form, { FormGroup, FormRow, FormActions, FormMessage } from '../common/Form';
+import FormField from '../common/FormField';
 import Button from '../common/Button';
 import StudentSearch from '../common/StudentSearch';
-import '../../styles/components/ReferralForm.css';
+import '../../styles/components/Form.css';
 
 // Referral form validation rules
 const referralValidator = createValidator({
@@ -33,15 +32,13 @@ const REFERRAL_REASONS = [
   { value: 'Other', label: 'Other' }
 ];
 
-
 /**
  * Component for submitting new referrals
  */
 const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
-
-  
   // Access student context to find if there's a pre-selected student
   const { selectedStudent, clearSelectedStudent } = useStudentData();
+  
   // Track if we're in view mode (viewing existing referral)
   const [viewMode, setViewMode] = useState(false);
   // Track if the student is valid (exists in the database)
@@ -164,15 +161,11 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
   return (
     <div className="referral-form-container">
       {serverError && (
-        <div className="form-message form-message--error">
-          {serverError}
-        </div>
+        <FormMessage type="error">{serverError}</FormMessage>
       )}
       
       {successMessage && (
-        <div className="form-message form-message--success">
-          {successMessage}
-        </div>
+        <FormMessage type="success">{successMessage}</FormMessage>
       )}
       
       {viewMode && (
@@ -204,7 +197,8 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
         </div>
         
         <FormRow>
-          <Select
+          <FormField
+            type="select"
             id="referralType"
             name="referralType"
             label="Type of Referral"
@@ -215,7 +209,8 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
             required
           />
           
-          <Select
+          <FormField
+            type="select"
             id="referralReason"
             name="referralReason"
             label="Reason for Referral"
@@ -227,20 +222,19 @@ const ReferralForm = ({ onSubmit, referralToView, onReset }) => {
           />
         </FormRow>
         
-        <div className="textarea-container">
-          <label htmlFor="referralNotes">Referral Notes:</label>
-          <textarea
+        <FormGroup>
+          <FormField
+            type="textarea"
             id="referralNotes"
             name="referralNotes"
+            label="Referral Notes"
             value={values.referralNotes}
             onChange={handleChange}
             onBlur={handleBlur}
             placeholder="Additional details or context"
-            rows={4}
             disabled={isSubmitting || viewMode}
-            className="referral-notes-textarea"
           />
-        </div>
+        </FormGroup>
         
         <FormActions>
           <Button 

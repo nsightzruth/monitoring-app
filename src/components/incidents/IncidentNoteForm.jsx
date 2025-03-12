@@ -3,13 +3,11 @@ import { useForm } from '../../hooks/useForm';
 import { createValidator, isEmpty } from '../../utils/validation';
 import { useStudentData } from '../../context/StudentDataContext';
 import { getTodayForInput, getCurrentTimeForInput } from '../../utils/dateUtils';
-import Form, { FormRow, FormActions } from '../common/Form';
-import FormMessage from '../common/Form';
-import Input from '../common/Input';
-import Select from '../common/Select';
+import Form, { FormGroup, FormRow, FormActions, FormMessage } from '../common/Form';
+import FormField from '../common/FormField';
 import Button from '../common/Button';
 import StudentSearch from '../common/StudentSearch';
-import '../../styles/components/IncidentNoteForm.css';
+import '../../styles/components/Form.css';
 
 // Get today's date and time for default values using the utility functions
 const formattedDate = getTodayForInput();
@@ -55,13 +53,6 @@ const createIncidentValidator = (formData) => {
 
 /**
  * Component for submitting new incidents and notes or editing existing ones
- * 
- * @param {Object} props - Component props
- * @param {Function} props.onSubmit - Function to call when submitting a new record
- * @param {Function} props.onEdit - Function to call when editing an existing record
- * @param {Object} props.incidentToView - Record to view
- * @param {boolean} props.editMode - Whether the form is in edit mode
- * @param {Function} props.onReset - Function to call when resetting the form
  */
 const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, onReset }) => {
   // Access student context to find if there's a pre-selected student
@@ -230,15 +221,11 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
   return (
     <div className="incident-note-form-container">
       {serverError && (
-        <div className="form-message form-message--error">
-          {serverError}
-        </div>
+        <FormMessage type="error">{serverError}</FormMessage>
       )}
       
       {successMessage && (
-        <div className="form-message form-message--success">
-          {successMessage}
-        </div>
+        <FormMessage type="success">{successMessage}</FormMessage>
       )}
       
       {viewMode && !isEditMode && (
@@ -276,7 +263,8 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
         </div>
         
         <FormRow>
-          <Select
+          <FormField
+            type="select"
             id="type"
             name="type"
             label="Type"
@@ -287,10 +275,10 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
             required
           />
           
-          <Input
+          <FormField
+            type="date"
             id="date"
             name="date"
-            type="date"
             label="Date"
             value={values.date}
             onChange={handleChange}
@@ -301,10 +289,10 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
             required
           />
           
-          <Input
+          <FormField
+            type="time"
             id="time"
             name="time"
-            type="time"
             label="Time"
             value={values.time}
             onChange={handleChange}
@@ -314,10 +302,10 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
         
         {(values.type === 'Incident' || ((viewMode || isEditMode) && incidentToView?.type === 'Incident')) && (
           <FormRow>
-            <Input
+            <FormField
+              type="text"
               id="location"
               name="location"
-              type="text"
               label="Location"
               value={values.location}
               onChange={handleChange}
@@ -329,10 +317,10 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
               required={values.type === 'Incident'}
             />
             
-            <Input
+            <FormField
+              type="text"
               id="offense"
               name="offense"
-              type="text"
               label="Offense"
               value={values.offense}
               onChange={handleChange}
@@ -346,26 +334,22 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
           </FormRow>
         )}
         
-        <div className="textarea-container">
-          <label htmlFor="note">Note:</label>
-          <div className="textarea-field-container">
-            <textarea
-              id="note"
-              name="note"
-              value={values.note}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Additional details or context"
-              rows={4}
-              disabled={isSubmitting || (viewMode && !isEditMode)}
-              required={values.type === 'Note'}
-              className="incident-note-textarea"
-            />
-            {touched.note && errors.note && (
-              <span className="form-error">{errors.note}</span>
-            )}
-          </div>
-        </div>
+        <FormGroup>
+          <FormField
+            type="textarea"
+            id="note"
+            name="note"
+            label="Note"
+            value={values.note}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={touched.note && !!errors.note}
+            errorMessage={errors.note}
+            placeholder="Additional details or context"
+            disabled={isSubmitting || (viewMode && !isEditMode)}
+            required={values.type === 'Note'}
+          />
+        </FormGroup>
         
         <FormActions>
           {viewMode && !isEditMode ? (

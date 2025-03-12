@@ -2,13 +2,11 @@ import { useState, useEffect } from 'react';
 import { useForm } from '../../hooks/useForm';
 import { createValidator, isEmpty } from '../../utils/validation';
 import { useStudentData } from '../../context/StudentDataContext';
-import Form, { FormRow, FormActions } from '../common/Form';
-import FormMessage from '../common/Form';
-import Input from '../common/Input';
-import Select from '../common/Select';
+import Form, { FormGroup, FormRow, FormActions, FormMessage } from '../common/Form';
+import FormField from '../common/FormField';
 import Button from '../common/Button';
 import StudentSearch from '../common/StudentSearch';
-import '../../styles/components/FollowupForm.css';
+import '../../styles/components/Form.css';
 
 // Followup types
 const FOLLOWUP_TYPES = [
@@ -63,14 +61,6 @@ const createFollowupValidator = (formData) => {
 
 /**
  * Component for submitting new followups
- * 
- * @param {Object} props - Component props
- * @param {Function} props.onSubmit - Function to call when submitting a new followup
- * @param {Function} props.onEdit - Function to call when editing a followup
- * @param {Object} props.followupToView - Followup to view/edit
- * @param {boolean} props.editMode - Whether form is in edit mode
- * @param {Function} props.onReset - Function to call when resetting the form
- * @param {Array} props.teamMembers - List of team members for responsible person dropdown
  */
 const FollowupForm = ({ 
   onSubmit, 
@@ -259,15 +249,11 @@ const FollowupForm = ({
   return (
     <div className="followup-form-container">
       {serverError && (
-        <div className="form-message form-message--error">
-          {serverError}
-        </div>
+        <FormMessage type="error">{serverError}</FormMessage>
       )}
       
       {successMessage && (
-        <div className="form-message form-message--success">
-          {successMessage}
-        </div>
+        <FormMessage type="success">{successMessage}</FormMessage>
       )}
       
       {viewMode && !isEditMode && (
@@ -305,7 +291,8 @@ const FollowupForm = ({
         </div>
         
         <FormRow>
-          <Select
+          <FormField
+            type="select"
             id="type"
             name="type"
             label="Followup Type"
@@ -316,7 +303,8 @@ const FollowupForm = ({
             required
           />
           
-          <Select
+          <FormField
+            type="select"
             id="responsiblePerson"
             name="responsiblePerson"
             label="Responsible Person"
@@ -333,10 +321,10 @@ const FollowupForm = ({
           <div className="intervention-section">
             <h3>Intervention Details</h3>
             <FormRow>
-              <Input
+              <FormField
+                type="text"
                 id="intervention"
                 name="intervention"
-                type="text"
                 label="Intervention"
                 value={values.intervention}
                 onChange={handleChange}
@@ -348,10 +336,10 @@ const FollowupForm = ({
                 required
               />
               
-              <Input
+              <FormField
+                type="text"
                 id="metric"
                 name="metric"
-                type="text"
                 label="Metric"
                 value={values.metric}
                 onChange={handleChange}
@@ -365,10 +353,10 @@ const FollowupForm = ({
             </FormRow>
             
             <FormRow>
-              <Input
+              <FormField
+                type="date"
                 id="startDate"
                 name="startDate"
-                type="date"
                 label="Start Date"
                 value={values.startDate}
                 onChange={handleChange}
@@ -379,10 +367,10 @@ const FollowupForm = ({
                 required
               />
               
-              <Input
+              <FormField
+                type="date"
                 id="endDate"
                 name="endDate"
-                type="date"
                 label="End Date"
                 value={values.endDate}
                 onChange={handleChange}
@@ -396,28 +384,22 @@ const FollowupForm = ({
           </div>
         )}
         
-        <div className="textarea-container">
-          <label htmlFor="followupNotes">
-            Followup Notes:
-            {values.type !== 'Intervention' && <span className="input-required">*</span>}
-          </label>
-          <div className="textarea-field-container">
-            <textarea
-              id="followupNotes"
-              name="followupNotes"
-              value={values.followupNotes}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Additional details or context"
-              rows={4}
-              disabled={isSubmitting || (viewMode && !isEditMode)}
-              className="followup-notes-textarea"
-            />
-            {touched.followupNotes && errors.followupNotes && (
-              <span className="form-error">{errors.followupNotes}</span>
-            )}
-          </div>
-        </div>
+        <FormGroup>
+          <FormField
+            type="textarea"
+            id="followupNotes"
+            name="followupNotes"
+            label="Followup Notes"
+            value={values.followupNotes}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={touched.followupNotes && !!errors.followupNotes}
+            errorMessage={errors.followupNotes}
+            placeholder="Additional details or context"
+            disabled={isSubmitting || (viewMode && !isEditMode)}
+            required={values.type !== 'Intervention'}
+          />
+        </FormGroup>
         
         <FormActions>
           {viewMode && !isEditMode ? (
