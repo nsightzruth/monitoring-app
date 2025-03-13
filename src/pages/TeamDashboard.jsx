@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTeams } from '../hooks/useTeams';
-import { useStudentData } from '../context/StudentDataContext'
+import { useStudentData } from '../context/StudentDataContext';
 import Select from '../components/common/Select';
 import Table from '../components/common/Table';
 import { IconButton } from '../components/common/Button';
@@ -13,11 +13,12 @@ import { formatLocalDate } from '../utils/dateUtils';
  */
 const TeamDashboard = ({ user, onNavigate }) => {
   const [activeMenu, setActiveMenu] = useState(null);
-  const menuRef = useRef(null);
+  const menuRefs = useRef({});
 
+  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (activeMenu && menuRefs.current[activeMenu] && !menuRefs.current[activeMenu].contains(event.target)) {
         setActiveMenu(null);
       }
     };
@@ -25,23 +26,6 @@ const TeamDashboard = ({ user, onNavigate }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleGlobalClick = (event) => {
-      // Check if the active menu is open and the click is outside
-      if (activeMenu && menuRef.current && !menuRef.current.contains(event.target)) {
-        setActiveMenu(null);
-      }
-    };
-  
-    // Add the event listener
-    document.addEventListener('mousedown', handleGlobalClick);
-  
-    return () => {
-      // Clean up the event listener
-      document.removeEventListener('mousedown', handleGlobalClick);
     };
   }, [activeMenu]);
 
@@ -71,13 +55,13 @@ const TeamDashboard = ({ user, onNavigate }) => {
 
   // Toggle the action menu for a student
   const toggleMenu = (studentId) => {
-    console.log('Toggle menu called for student:', studentId);
     if (activeMenu === studentId) {
       setActiveMenu(null);
     } else {
       setActiveMenu(studentId);
     }
   };
+
   // Handler for marking a student as reviewed
   const handleMarkReviewed = async (studentId) => {
     await markStudentReviewed(studentId);
@@ -93,8 +77,6 @@ const TeamDashboard = ({ user, onNavigate }) => {
       return;
     }
     
-    console.log('Adding note for student:', student.name, student.id);
-    
     // Store the selected student in context
     selectStudent({
       id: student.id,
@@ -108,8 +90,37 @@ const TeamDashboard = ({ user, onNavigate }) => {
     
     // Navigate to incidents page
     if (onNavigate) {
-      console.log('Navigating to incidents page');
       onNavigate('incidents');
+    }
+  };
+
+  // Handler for adding/updating followup for a student
+  const handleAddFollowup = (student) => {
+    // Make sure we have the necessary student data
+    if (!student || !student.id || !student.name) {
+      console.error('Cannot add followup: Missing student data', student);
+      return;
+    }
+    
+    // Store the selected student in context
+    selectStudent({
+      id: student.id,
+      name: student.name,
+      grade: student.grade || '',
+      photo: student.photo || ''
+    });
+    
+    // Close the menu
+    setActiveMenu(null);
+    
+    // Add query parameters for filtering followups by student
+    const queryParams = new URLSearchParams();
+    queryParams.set('student_id', student.id);
+    queryParams.set('student_name', student.name);
+    
+    // Navigate to followups page
+    if (onNavigate) {
+      onNavigate('followups', queryParams);
     }
   };
 
@@ -181,7 +192,7 @@ const TeamDashboard = ({ user, onNavigate }) => {
       key: 'referralType',
       title: 'Referral Type'
     },
-        {
+    {
       key: 'notes',
       title: 'Notes',
       render: (item) => (
@@ -268,11 +279,14 @@ const TeamDashboard = ({ user, onNavigate }) => {
       title: 'Actions',
       render: (item) => (
         <div className="actions-cell">
-          <div className="menu-container" ref={item.id === activeMenu ? menuRef : null}>
+          <div 
+            className={`menu-container ${activeMenu === item.id ? 'active' : ''}`} 
+            ref={el => menuRefs.current[item.id] = el}
+          >
             <IconButton 
               title="Open menu"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent event bubbling
+                e.stopPropagation();
                 toggleMenu(item.id);
               }}
               icon={
@@ -289,7 +303,7 @@ const TeamDashboard = ({ user, onNavigate }) => {
                 <button 
                   className="menu-item" 
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent event bubbling
+                    e.stopPropagation();
                     handleMarkReviewed(item.id);
                   }}
                   disabled={actionStatus.loading}
@@ -304,8 +318,7 @@ const TeamDashboard = ({ user, onNavigate }) => {
                 <button 
                   className="menu-item" 
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent event bubbling
-                    console.log('Add note clicked for student:', item.id);
+                    e.stopPropagation();
                     handleAddNote(item._fullData);
                   }}
                   disabled={actionStatus.loading}
@@ -320,7 +333,7 @@ const TeamDashboard = ({ user, onNavigate }) => {
                 <button 
                   className="menu-item" 
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent event bubbling
+                    e.stopPropagation();
                     handleAddFollowup(item._fullData);
                   }}
                   disabled={actionStatus.loading}
@@ -328,7 +341,7 @@ const TeamDashboard = ({ user, onNavigate }) => {
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
                   </svg>
-                  Add followup
+                  Add/Update Followup
                 </button>
               </div>
             )}
@@ -358,14 +371,16 @@ const TeamDashboard = ({ user, onNavigate }) => {
         />
       </div>
       
-      <Table
-        columns={columns}
-        data={tableData}
-        loading={loading}
-        emptyMessage="No students found with relevant status in this team."
-        loadingMessage="Loading team data..."
-        className="students-table"
-      />
+      <div className="custom-table-wrapper">
+        <Table
+          columns={columns}
+          data={tableData}
+          loading={loading}
+          emptyMessage="No students found with relevant status in this team."
+          loadingMessage="Loading team data..."
+          className="students-table"
+        />
+      </div>
     </section>
   );
 };

@@ -6,6 +6,8 @@ import '../../styles/components/StudentSearch.css';
  * Reusable student search component with autocomplete
  */
 const StudentSearch = ({ 
+  id,
+  name,
   value = '',
   onChange,
   onSelect,
@@ -86,10 +88,16 @@ const StudentSearch = ({
     }
   };
 
+  // Generate a unique ID if none is provided
+  const inputId = id || `student-search-${Math.random().toString(36).substr(2, 9)}`;
+  const inputName = name || inputId;
+
   return (
     <div className={`student-search-container ${className}`}>
       <input
         type="text"
+        id="studentName"
+        name={inputName}
         value={inputValue}
         onChange={handleInputChange}
         onFocus={() => inputValue.length >= 3 && searchResults.length > 0 && setShowSuggestions(true)}
@@ -99,21 +107,32 @@ const StudentSearch = ({
         ref={inputRef}
         className="student-search-input"
         aria-label="Search for student"
+        aria-autocomplete="list"
+        aria-controls={showSuggestions ? `${inputId}-suggestions` : undefined}
+        aria-expanded={showSuggestions}
       />
       
       {isSearching && (
-        <div className="search-indicator">
+        <div className="search-indicator" aria-live="polite">
           Searching...
         </div>
       )}
       
       {showSuggestions && searchResults.length > 0 && (
-        <ul className="suggestions-list" ref={suggestionsRef}>
+        <ul 
+          id={`${inputId}-suggestions`}
+          className="suggestions-list" 
+          ref={suggestionsRef}
+          role="listbox"
+        >
           {searchResults.map(student => (
             <li 
               key={student.id}
+              id={`suggestion-${student.id}`}
               onClick={() => handleStudentSelect(student)}
               className="suggestion-item"
+              role="option"
+              aria-selected={inputValue === student.name}
             >
               {student.name} {student.grade ? `(${student.grade})` : ''}
             </li>

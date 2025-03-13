@@ -6,13 +6,14 @@ import ReferralPage from './pages/ReferralPage';
 import AdminPage from './pages/AdminPage';
 import TeamDashboard from './pages/TeamDashboard';
 import IncidentNotePage from './pages/IncidentNotePage';
-import FollowupPage from './pages/FollowupPage'; // Import the new FollowupPage
+import FollowupPage from './pages/FollowupPage';
 import Navigation from './components/layout/Navigation';
 import './styles/App.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [currentPage, setCurrentPage] = useState('referrals');
+  const [queryParams, setQueryParams] = useState(null);
 
   // Check user auth status
   useEffect(() => {
@@ -56,9 +57,10 @@ function App() {
     }
   };
 
-  // Navigation handler
-  const handleNavigation = (page) => {
+  // Navigation handler with query params support
+  const handleNavigation = (page, params = null) => {
     setCurrentPage(page);
+    setQueryParams(params);
   };
 
   const renderContent = () => {
@@ -73,8 +75,8 @@ function App() {
         return <TeamDashboard user={user} onNavigate={handleNavigation} />;
       case 'incidents':
         return <IncidentNotePage user={user} />;
-      case 'followups': // Add the new followups case
-        return <FollowupPage user={user} />;
+      case 'followups':
+        return <FollowupPage user={user} queryParams={queryParams} />;
       case 'referrals':
       default:
         return <ReferralPage user={user} />;

@@ -118,6 +118,7 @@ const FollowupForm = ({
     },
     // Submit handler
     async (formData) => {
+      // Only check validStudent for new followups, not when editing
       if (!validStudent && !isEditMode) {
         return { success: false, error: 'Please select a valid student from the suggestions' };
       }
@@ -177,6 +178,7 @@ const FollowupForm = ({
         studentName: selectedStudent.name || '',
         studentId: selectedStudent.id || ''
       }));
+      // Set validStudent to true when student is pre-populated
       setValidStudent(true);
       
       // Clear the selected student from context after using it
@@ -434,7 +436,8 @@ const FollowupForm = ({
                 type="submit" 
                 variant="primary" 
                 isLoading={isSubmitting}
-                disabled={isSubmitting || (!validStudent && !isEditMode)}
+                // Simplified: Only disable when submitting or in view mode
+                disabled={isSubmitting || (viewMode && !isEditMode)}
               >
                 {isEditMode ? 'Save Changes' : 'Submit Followup'}
               </Button>

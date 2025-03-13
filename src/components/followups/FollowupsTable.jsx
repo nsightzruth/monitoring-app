@@ -15,8 +15,6 @@ import '../../styles/components/FollowupsTable.css';
  * @param {Object} props.pendingStatusChanges - Object with pending status changes
  * @param {Function} props.onStatusChange - Function to call when status checkbox changes
  * @param {Function} props.onSaveStatuses - Function to call to save status changes
- * @param {string} props.filterStatus - Current filter status
- * @param {Function} props.onFilterChange - Function to call when filter changes
  * @param {boolean} props.loading - Whether the data is loading
  */
 const FollowupsTable = ({ 
@@ -27,8 +25,6 @@ const FollowupsTable = ({
   pendingStatusChanges = {},
   onStatusChange,
   onSaveStatuses,
-  filterStatus = 'Active',
-  onFilterChange,
   loading 
 }) => {
   // Format notes based on followup type
@@ -73,24 +69,10 @@ const FollowupsTable = ({
     }
   };
   
-  // Handle completing a followup
-  const handleComplete = (followup) => {
-    if (onComplete && window.confirm('Mark this followup as complete?')) {
-      onComplete(followup.id);
-    }
-  };
-  
   // Handle deleting a followup
   const handleDelete = (followupId) => {
     if (onDelete && window.confirm('Are you sure you want to delete this followup?')) {
       onDelete(followupId);
-    }
-  };
-
-  // Handle status filter change
-  const handleFilterChange = () => {
-    if (onFilterChange) {
-      onFilterChange(filterStatus === 'Active' ? 'Completed' : 'Active');
     }
   };
 
@@ -112,7 +94,7 @@ const FollowupsTable = ({
   const columns = [
     {
       key: 'status',
-      title: 'Status',
+      title: 'Completed?',
       width: '8%',
       render: (item) => (
         <div className="status-checkbox-container">
@@ -122,10 +104,8 @@ const FollowupsTable = ({
             checked={pendingStatusChanges[item.id] === 'Completed' || item.followup_status === 'Completed'}
             onChange={(e) => handleStatusChange(item.id, e)}
             className="status-checkbox"
+            aria-label="Mark as completed"
           />
-          <label htmlFor={`status-${item.id}`} className="status-label">
-            {pendingStatusChanges[item.id] === 'Completed' || item.followup_status === 'Completed' ? 'Done' : 'Active'}
-          </label>
         </div>
       )
     },
@@ -158,7 +138,7 @@ const FollowupsTable = ({
     },
     {
       key: 'responsible_person_name',
-      title: 'Responsible',
+      title: 'Responsible Person',
       width: '12%'
     },
     {
@@ -171,6 +151,7 @@ const FollowupsTable = ({
       key: 'actions',
       title: 'Actions',
       width: '18%',
+      cellClassName: 'actions-cell-left-aligned',
       render: (item) => (
         <div className="action-cell">
           <IconButton 
@@ -215,38 +196,23 @@ const FollowupsTable = ({
 
   return (
     <div className="followups-table-container">
-      <div className="table-header">
-        <div className="table-actions">
-          {pendingChangesCount > 0 && (
-            <Button 
-              variant="primary" 
-              size="sm" 
-              onClick={handleSaveClick}
-            >
-              Save {pendingChangesCount} {pendingChangesCount === 1 ? 'change' : 'changes'}
-            </Button>
-          )}
-        </div>
-        <div className="filter-toggle">
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={filterStatus === 'Completed'} 
-              onChange={handleFilterChange} 
-            />
-            <span className="slider round"></span>
-          </label>
-          <span className="toggle-label">
-            {filterStatus === 'Active' ? 'Active Followups' : 'Completed Followups'}
-          </span>
-        </div>
+      <div className="table-actions">
+        {pendingChangesCount > 0 && (
+          <Button 
+            variant="primary" 
+            size="sm" 
+            onClick={handleSaveClick}
+          >
+            Save {pendingChangesCount} {pendingChangesCount === 1 ? 'change' : 'changes'}
+          </Button>
+        )}
       </div>
       
       <Table
         columns={columns}
         data={followups}
         loading={loading}
-        emptyMessage={`No ${filterStatus.toLowerCase()} followups found.`}
+        emptyMessage="No followups found matching your filter criteria."
         loadingMessage="Loading followups..."
         className="followups-table"
       />

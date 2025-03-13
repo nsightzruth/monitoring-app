@@ -1,16 +1,27 @@
 import { supabase } from './config';
+import { incidentService } from './incident-service';
 
 /**
  * Followup service for handling followup-related operations
  */
 export const followupService = {
   /**
-   * Get followups where the staff member is mentioned
-   * @param {string} staffId - Staff ID
-   * @param {string} status - Filter by status (optional)
+   * Get followups with flexible filtering options
+   * @param {Object} options - Query options
+   * @param {string} options.staffId - Staff ID
+   * @param {string} options.filterType - Filter type: 'responsible' (default), 'team', 'all'
+   * @param {string} options.status - Filter by status (optional)
+   * @param {string} options.studentId - Filter by student ID (optional)
    * @returns {Promise<Array>} - Array of followup objects
    */
-  getFollowupsByStaff: async (staffId, status = null) => {
+  getFollowups: async (options) => {
+    const { 
+      staffId, 
+      filterType = 'responsible', 
+      status = null,
+      studentId = null
+    } = options;
+
     try {
       let query = supabase
         .from('Followup')
@@ -22,10 +33,35 @@ export const followupService = {
           Staff:responsible_person (name)
         `);
       
+      // Apply different filters based on filterType
+      if (filterType === 'responsible') {
+        // Only show followups where the user is responsible
+        query = query.eq('responsible_person', staffId);
+      } else if (filterType === 'team') {
+        // We need to get all students in the user's teams first to filter
+        const { data: teamStudents } = await supabase.rpc('get_team_students_for_staff', {
+          staff_id_param: staffId
+        });
+        
+        if (teamStudents && teamStudents.length > 0) {
+          const studentIds = teamStudents.map(s => s.student_id);
+          query = query.in('student_id', studentIds);
+        }
+      }
+      // For 'all', we don't apply any staff-based filters
+      
       // Filter by status if provided
       if (status) {
         query = query.eq('followup_status', status);
       }
+      
+      // Filter by student if provided
+      if (studentId) {
+        query = query.eq('student_id', studentId);
+      }
+      
+      // Exclude deleted followups
+      query = query.neq('followup_status', 'Deleted');
       
       // Execute the query
       const { data, error } = await query.order('updated_at', { ascending: false });
@@ -45,6 +81,130 @@ export const followupService = {
       console.error('Error fetching followups:', error);
       throw error;
     }
+  },
+
+  /**
+   * Get all students from teams that the staff member is part of
+   * @param {string} staffId - Staff ID
+   * @returns {Promise<Array>} - Array of student objects
+   */
+  getTeamStudents: async (staffId) => {
+    try {
+      // Use RPC function to get all students in the staff member's teams
+      const { data, error } = await supabase.rpc('get_team_students_for_staff', {
+        staff_id_param: staffId
+      });
+      
+      if (error) throw error;
+      
+      // Deduplicate students
+      const uniqueStudents = [];
+      const studentIds = new Set();
+      
+      data.forEach(student => {
+        if (!studentIds.has(student.student_id)) {
+          studentIds.add(student.student_id);
+          uniqueStudents.push({
+            id: student.student_id,
+            name: student.student_name,
+            grade: student.grade
+          });
+        }
+      });
+      
+      return uniqueStudents.sort((a, b) => a.name.localeCompare(b.name));
+    } catch (error) {
+      console.error('Error fetching team students:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Mark a followup as complete and create a note
+   * @param {string} followupId - Followup ID
+   * @param {string} staffId - Staff ID completing the followup
+   * @returns {Promise<Object>} - Result with status and data
+   */
+  markFollowupComplete: async (followupId, staffId) => {
+    try {
+      // 1. Get the followup details
+      const { data: followup, error: fetchError } = await supabase
+        .from('Followup')
+        .select(`
+          id, type, intervention, metric, start_date, end_date, 
+          followup_notes, student_id, responsible_person, followup_status,
+          Student:student_id (name)
+        `)
+        .eq('id', followupId)
+        .single();
+        
+      if (fetchError) throw fetchError;
+      
+      // 2. Update the followup status to 'Completed'
+      const { data: updatedFollowup, error: updateError } = await supabase
+        .from('Followup')
+        .update({ 
+          followup_status: 'Completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', followupId)
+        .select();
+        
+      if (updateError) throw updateError;
+      
+      // 3. Format note content based on followup type
+      let noteContent = '';
+      
+      if (followup.type === 'Intervention') {
+        noteContent = `Completed ${followup.type} followup: ${followup.intervention || ''} measured by ${followup.metric || ''}`;
+        if (followup.start_date && followup.end_date) {
+          noteContent += ` from ${followup.start_date} to ${followup.end_date}`;
+        }
+        if (followup.followup_notes) {
+          noteContent += `. ${followup.followup_notes}`;
+        }
+      } else {
+        noteContent = `Completed ${followup.type} followup: ${followup.followup_notes || ''}`;
+      }
+      
+      // 4. Create a note to document the completion
+      const incidentData = {
+        studentId: followup.student_id,
+        studentName: followup.Student?.name || 'Unknown Student',
+        type: 'Note',
+        date: new Date().toISOString().split('T')[0],
+        time: '',
+        note: noteContent,
+        isDraft: false
+      };
+      
+      const note = await incidentService.createIncident(incidentData, staffId);
+      
+      return { 
+        success: true, 
+        data: { 
+          followup: updatedFollowup[0],
+          note
+        }
+      };
+    } catch (error) {
+      console.error('Error marking followup as complete:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
+   * Get followups where the staff member is mentioned
+   * @param {string} staffId - Staff ID
+   * @param {string} status - Filter by status (optional)
+   * @returns {Promise<Array>} - Array of followup objects
+   */
+  getFollowupsByStaff: async (staffId, status = null) => {
+    return followupService.getFollowups({
+      staffId,
+      filterType: 'all',
+      status
+    });
   },
 
   /**
@@ -54,136 +214,11 @@ export const followupService = {
    * @returns {Promise<Array>} - Array of followup objects
    */
   getFollowupsByResponsiblePerson: async (staffId, status = null) => {
-    try {
-      let query = supabase
-        .from('Followup')
-        .select(`
-          id, type, intervention, metric, start_date, end_date, 
-          followup_notes, created_at, updated_at, student_id, 
-          responsible_person, followup_status,
-          Student:student_id (name, grade),
-          Staff:responsible_person (name)
-        `)
-        .eq('responsible_person', staffId);
-      
-      // Filter by status if provided
-      if (status) {
-        query = query.eq('followup_status', status);
-      }
-      
-      // Also filter out deleted followups
-      query = query.neq('followup_status', 'Deleted');
-      
-      // Execute the query
-      const { data, error } = await query.order('updated_at', { ascending: false });
-          
-      if (error) throw error;
-      
-      // Format the data to include student and staff name
-      const formattedData = data.map(record => ({
-        ...record,
-        student_name: record.Student?.name || 'Unknown Student',
-        grade: record.Student?.grade || '',
-        responsible_person_name: record.Staff?.name || 'Unassigned',
-      }));
-      
-      return formattedData || [];
-    } catch (error) {
-      console.error('Error fetching followups:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get followups for a team
-   * @param {string} teamId - Team ID
-   * @param {string} status - Filter by status (optional)
-   * @returns {Promise<Array>} - Array of followup objects
-   */
-  getFollowupsByTeam: async (teamId, status = null) => {
-    try {
-      let query = supabase
-        .from('Followup')
-        .select(`
-          id, type, intervention, metric, start_date, end_date, 
-          followup_notes, created_at, updated_at, student_id, 
-          responsible_person, followup_status,
-          Student:student_id (name, grade, team_id),
-          Staff:responsible_person (name)
-        `);
-      
-      // Filter by status if provided
-      if (status) {
-        query = query.eq('followup_status', status);
-      }
-      
-      // Execute the query
-      const { data, error } = await query.order('updated_at', { ascending: false });
-          
-      if (error) throw error;
-      
-      // Filter results to only include students in the specified team
-      const teamFollowups = data.filter(record => 
-        record.Student && record.Student.team_id === teamId
-      );
-      
-      // Format the data to include student and staff name
-      const formattedData = teamFollowups.map(record => ({
-        ...record,
-        student_name: record.Student?.name || 'Unknown Student',
-        grade: record.Student?.grade || '',
-        responsible_person_name: record.Staff?.name || 'Unassigned',
-      }));
-      
-      return formattedData || [];
-    } catch (error) {
-      console.error('Error fetching team followups:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get followups for a specific student
-   * @param {string} studentId - Student ID
-   * @param {string} status - Filter by status (optional)
-   * @returns {Promise<Array>} - Array of followup objects
-   */
-  getFollowupsByStudent: async (studentId, status = null) => {
-    try {
-      let query = supabase
-        .from('Followup')
-        .select(`
-          id, type, intervention, metric, start_date, end_date, 
-          followup_notes, created_at, updated_at, 
-          responsible_person, followup_status,
-          Staff:responsible_person (name)
-        `)
-        .eq('student_id', studentId);
-      
-      // Filter by status if provided
-      if (status) {
-        query = query.eq('followup_status', status);
-      }
-
-      // Filter out deleted followups
-      query = query.neq('followup_status', 'Deleted');
-      
-      // Execute the query
-      const { data, error } = await query.order('updated_at', { ascending: false });
-          
-      if (error) throw error;
-      
-      // Format the data to include responsible person name
-      const formattedData = data.map(record => ({
-        ...record,
-        responsible_person_name: record.Staff?.name || 'Unassigned',
-      }));
-      
-      return formattedData || [];
-    } catch (error) {
-      console.error('Error fetching student followups:', error);
-      throw error;
-    }
+    return followupService.getFollowups({
+      staffId,
+      filterType: 'responsible',
+      status
+    });
   },
 
   /**
@@ -292,85 +327,10 @@ export const followupService = {
   },
 
   /**
-   * Mark a followup as complete and create a note
+   * Mark a followup as deleted
    * @param {string} followupId - Followup ID
-   * @param {string} staffId - Staff ID completing the followup
-   * @returns {Promise<Object>} - Result with status and data
+   * @returns {Promise<boolean>} - Success status
    */
-  markFollowupComplete: async (followupId, staffId) => {
-    try {
-      // Start a Supabase transaction
-      // Note: Supabase doesn't support true transactions yet, so we'll do this in steps
-      
-      // 1. Get the followup details
-      const { data: followup, error: fetchError } = await supabase
-        .from('Followup')
-        .select(`
-          id, type, intervention, metric, start_date, end_date, 
-          followup_notes, student_id, responsible_person, followup_status,
-          Student:student_id (name)
-        `)
-        .eq('id', followupId)
-        .single();
-        
-      if (fetchError) throw fetchError;
-      
-      // 2. Update the followup status to 'Completed'
-      const { data: updatedFollowup, error: updateError } = await supabase
-        .from('Followup')
-        .update({ 
-          followup_status: 'Completed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', followupId)
-        .select();
-        
-      if (updateError) throw updateError;
-      
-      // 3. Create a note to document the completion
-      const today = new Date().toISOString().split('T')[0];
-      const studentName = followup.Student?.name || 'Unknown Student';
-      
-      let noteContent;
-      if (followup.type === 'Intervention') {
-        noteContent = `Completed ${followup.type} followup: ${followup.intervention || ''} measured by ${followup.metric || ''} from ${followup.start_date || ''} to ${followup.end_date || ''}. ${followup.followup_notes || ''}`;
-      } else {
-        noteContent = `Completed ${followup.type} followup: ${followup.followup_notes || ''}`;
-      }
-      
-      const { data: note, error: noteError } = await supabase
-        .from('IncidentsNotes')
-        .insert([{
-          student_id: followup.student_id,
-          student_name: studentName,
-          type: 'Note',
-          date: today,
-          note: noteContent,
-          draft_status: false,
-          staff_id: staffId
-        }])
-        .select();
-        
-      if (noteError) throw noteError;
-      
-      return { 
-        success: true, 
-        data: { 
-          followup: updatedFollowup[0],
-          note: note[0]
-        }
-      };
-    } catch (error) {
-      console.error('Error marking followup as complete:', error);
-      return { success: false, error: error.message };
-    }
-  },
-
-  /**
-     * Mark a followup as deleted
-     * @param {string} followupId - Followup ID
-     * @returns {Promise<boolean>} - Success status
-     */
   deleteFollowup: async (followupId) => {
     try {
       const { error } = await supabase
@@ -478,5 +438,27 @@ export const followupService = {
       console.error('Error fetching team members:', error);
       throw error;
     }
+  },
+
+  /**
+   * Get followups for a specific student
+   * @param {string} studentId - Student ID
+   * @param {string} status - Filter by status (optional)
+   * @returns {Promise<Array>} - Array of followup objects
+   */
+  getFollowupsByStudent: async (studentId, status = null) => {
+    try {
+      return followupService.getFollowups({
+        staffId: null, // Not filtering by staff
+        filterType: 'all',
+        status,
+        studentId
+      });
+    } catch (error) {
+      console.error('Error fetching student followups:', error);
+      return [];
+    }
   }
-}; 
+};
+
+export default followupService;

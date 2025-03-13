@@ -26,6 +26,14 @@
   font-weight: 600;
   font-size: 0.95rem;
 }
+
+/* Custom table wrapper to manage overflow */
+.custom-table-wrapper {
+  width: 100%;
+  position: relative;
+  /* Use visible to prevent scrollbar on menu open */
+  overflow: visible;
+}
   
 /* Student cell styling */
 .student-cell {
@@ -209,11 +217,15 @@
 /* Action menu styling */
 .actions-cell {
   position: relative;
-  z-index: 10; /* Make sure the cell has a z-index */
+  z-index: 1;
 }
 
 .menu-container {
   position: relative;
+}
+
+.menu-container.active {
+  z-index: 100;
 }
 
 .dropdown-menu {
@@ -221,7 +233,7 @@
   top: 100%;
   right: 0;
   background-color: white;
-  min-width: 180px;
+  min-width: 200px;
   border-radius: var(--border-radius);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   display: flex;
@@ -268,7 +280,20 @@
 .menu-item svg {
   flex-shrink: 0;
 }
-  
+
+/* Fix for the table container to prevent horizontal scrollbar */
+.table-container {
+  overflow-x: visible;
+}
+
+/* Ensure parent containers don't clip the dropdown */
+.team-dashboard,
+.table-section,
+.standard-table-container,
+.table-container {
+  overflow: visible;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .team-selector {
