@@ -83,8 +83,6 @@ const AdminPage = ({ user, supabase }) => {
       }
 
       try {
-        console.log('Checking admin role for user ID:', user.id);
-        
         // Get user roles or check a specific admin flag
         const { data, error } = await supabase
           .from('Staff')
@@ -96,8 +94,6 @@ const AdminPage = ({ user, supabase }) => {
           console.error('Error fetching admin status:', error);
           throw error;
         }
-        
-        console.log('Admin status result:', data);
         
         // Use the actual admin status from the database
         setIsAdmin(data?.is_admin === true);

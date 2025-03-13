@@ -1,5 +1,6 @@
 import { supabase } from './config';
 import { incidentService } from './incident-service';
+import { progressService } from './progress-service';
 
 /**
  * Followup service for handling followup-related operations
@@ -84,7 +85,7 @@ export const followupService = {
   },
 
   /**
-   * Get all students from teams that the staff member is part of
+   * Get all students from teams that the staff member belongs to
    * @param {string} staffId - Staff ID
    * @returns {Promise<Array>} - Array of student objects
    */
@@ -178,7 +179,6 @@ export const followupService = {
         isDraft: false
       };
       
-      // FIXED: Explicitly passing staffId to createIncident
       const note = await incidentService.createIncident(incidentData, staffId);
       
       return { 
@@ -239,9 +239,6 @@ export const followupService = {
     try {
       const now = new Date().toISOString();
       
-      // Log the data for debugging
-      console.log('createFollowup received data:', JSON.stringify(followupData, null, 2));
-      
       // Create the object to insert into Supabase
       const followupObject = {
         student_id: followupData.studentId,
@@ -260,8 +257,6 @@ export const followupService = {
         followupObject.start_date = followupData.startDate;
         followupObject.end_date = followupData.endDate;
       }
-      
-      console.log('Inserting followup to Supabase:', JSON.stringify(followupObject, null, 2));
       
       const { data, error } = await supabase
         .from('Followup')
@@ -292,7 +287,17 @@ export const followupService = {
         responsible_person_name: data[0].Staff?.name || 'Unassigned',
       };
       
-      console.log('Successfully created followup:', formattedRecord.id);
+      // For intervention followups, create progress monitoring entries
+      if (followupData.type === 'Intervention' && followupData.startDate && followupData.endDate) {
+        try {
+          // Create progress entries for this intervention
+          await progressService.createProgressEntries(formattedRecord, followupData.responsiblePerson);
+        } catch (progressError) {
+          console.error('Error creating progress entries:', progressError);
+          // Don't fail the whole operation if progress entries fail to create
+        }
+      }
+      
       return formattedRecord;
     } catch (error) {
       console.error('Error creating followup:', error);

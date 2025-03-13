@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect } from 'react';
+import React, { forwardRef } from 'react';
 import '../../styles/components/Select.css';
 
 /**
@@ -27,13 +27,6 @@ const Select = forwardRef(({
 
   // Use id as name if name is not provided
   const selectName = name || id;
-  
-  // Debug logging for value
-  useEffect(() => {
-    console.log(`Select (${id}) value:`, value);
-    console.log(`Select (${id}) type:`, typeof value);
-    console.log(`Select (${id}) options:`, options);
-  }, [id, value, options]);
 
   return (
     <div className="select-container inline-layout">

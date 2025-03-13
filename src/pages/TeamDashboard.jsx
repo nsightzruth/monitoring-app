@@ -94,9 +94,7 @@ const TeamDashboard = ({ user, onNavigate }) => {
       console.error('Cannot add note: Missing student data', student);
       return;
     }
-    
-    console.log('Add note clicked for student:', student.name);
-    
+        
     // Store the selected student in context
     selectStudent({
       id: student.id,

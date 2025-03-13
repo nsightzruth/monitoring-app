@@ -7,6 +7,7 @@ import AdminPage from './pages/AdminPage';
 import TeamDashboard from './pages/TeamDashboard';
 import IncidentNotePage from './pages/IncidentNotePage';
 import FollowupPage from './pages/FollowupPage';
+import ProgressMonitoringPage from './pages/ProgressMonitoringPage';
 import Navigation from './components/layout/Navigation';
 import './styles/App.css';
 
@@ -77,6 +78,8 @@ function App() {
         return <IncidentNotePage user={user} />;
       case 'followups':
         return <FollowupPage user={user} queryParams={queryParams} />;
+      case 'progress':
+        return <ProgressMonitoringPage user={user} />;
       case 'referrals':
       default:
         return <ReferralPage user={user} />;

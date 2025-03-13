@@ -125,9 +125,6 @@ const FollowupForm = ({
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Debug logging
-    console.log(`Field ${name} changed to:`, value);
-    
     // Clear errors for this field when value changes
     if (formErrors[name]) {
       setFormErrors(prev => {
@@ -141,9 +138,6 @@ const FollowupForm = ({
   // Handle field change directly (for custom inputs)
   const handleFieldChange = (name, value) => {
     setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Debug logging
-    console.log(`Field ${name} changed directly to:`, value);
     
     // Clear errors for this field when value changes
     if (formErrors[name]) {
@@ -178,12 +172,6 @@ const FollowupForm = ({
       errors.type = 'Type is required';
     }
     
-    // Debug logging to help identify the issue
-    console.log('Validating responsiblePerson value:', data.responsiblePerson);
-    console.log('Type of responsiblePerson:', typeof data.responsiblePerson);
-    console.log('Is empty check:', !data.responsiblePerson);
-    
-    // FIXED: More robust check for responsiblePerson
     if (!data.responsiblePerson && data.responsiblePerson !== 0) {
       errors.responsiblePerson = 'Responsible person is required';
     }
@@ -224,11 +212,6 @@ const FollowupForm = ({
       setServerError('Please select a valid student from the suggestions');
       return;
     }
-    
-    // Debug log current form state
-    console.log('Form data before validation:', formData);
-    console.log('Team members available:', teamMembers);
-    console.log('Responsible person options:', responsiblePersonOptions);
     
     // Validate form data
     const errors = validateForm(formData);

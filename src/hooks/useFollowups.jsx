@@ -108,9 +108,6 @@ export const useFollowups = (staffId) => {
       // Show loading state
       setSubmitStatus({ loading: true, error: null, success: false });
       
-      // Log the data to help with debugging
-      console.log('Creating followup with data:', formData);
-      
       // Prepare the data for the service call
       const followupData = {
         studentId: formData.studentId,
@@ -150,9 +147,6 @@ export const useFollowups = (staffId) => {
   const updateFollowup = useCallback(async (followupId, followupData) => {
     try {
       setSubmitStatus({ loading: true, error: null, success: false });
-      
-      // Log data for debugging
-      console.log('Updating followup:', followupId, followupData);
       
       const updatedFollowup = await followupService.updateFollowup(followupId, followupData);
       
@@ -263,7 +257,6 @@ export const useFollowups = (staffId) => {
    * @param {boolean} checked - Whether the checkbox is checked
    */
   const toggleFollowupStatus = useCallback((followupId, checked) => {
-    console.log("Toggling status:", followupId, checked ? 'Completed' : 'Active');
     setPendingStatusChanges(prev => ({
       ...prev,
       [followupId]: checked ? 'Completed' : 'Active'
@@ -277,9 +270,7 @@ export const useFollowups = (staffId) => {
   const savePendingStatusChanges = useCallback(async () => {
     try {
       setSubmitStatus({ loading: true, error: null, success: false });
-      
-      console.log("Saving status changes:", pendingStatusChanges);
-      
+            
       // Prepare the updates
       const updates = Object.entries(pendingStatusChanges).map(([id, status]) => ({
         id,
@@ -298,10 +289,6 @@ export const useFollowups = (staffId) => {
       for (const update of updates) {
         if (update.status === 'Completed') {
           // For each completed followup, mark it complete and create a note
-          console.log("Completing followup:", update.id);
-          
-          // FIXED: Directly use the markFollowupComplete service function
-          // This ensures the note creation functionality from the service is used
           const result = await followupService.markFollowupComplete(update.id, staffId);
           if (result.success) {
             results.push(result.data);
@@ -310,7 +297,6 @@ export const useFollowups = (staffId) => {
           }
         } else {
           // For other status changes, just update the status
-          console.log("Updating followup status:", update.id, update.status);
           const updatedFollowup = await followupService.updateFollowup(update.id, {
             followup_status: update.status
           });

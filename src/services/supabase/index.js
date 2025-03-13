@@ -6,6 +6,7 @@ import { teamService } from './team-service';
 import { incidentService } from './incident-service';
 import { adminService } from './admin-service';
 import { followupService } from './followup-service';
+import { progressService } from './progress-service';
 
 // Export all services
 export {
@@ -16,5 +17,6 @@ export {
   teamService,
   incidentService,
   adminService,
-  followupService
+  followupService,
+  progressService
 };

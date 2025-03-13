@@ -1,0 +1,147 @@
+/* 
+ * Styles for the ProgressMonitoringTable component
+ */
+
+ .progress-table-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .progress-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    background-color: white;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--box-shadow);
+    border-radius: var(--border-radius);
+  }
+  
+  .progress-table th,
+  .progress-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eaedf0;
+  }
+  
+  .progress-table th {
+    background-color: var(--tertiary-color);
+    font-weight: 600;
+    color: var(--dark-text);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  
+  .progress-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .progress-table tr:hover {
+    background-color: #f9fafb;
+  }
+  
+  /* Loading and empty states */
+  .progress-table-loading,
+  .progress-table-empty {
+    text-align: center;
+    padding: 2rem 0;
+    color: #6c757d;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+  }
+  
+  /* Student grouping styles */
+  .student-group {
+    margin-bottom: 2rem;
+  }
+  
+  .student-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .student-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  .student-grade {
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+  
+  /* Column widths */
+  .equal-width {
+    width: 16.66%; /* Equal width for 6 columns (100% / 6) */
+  }
+  
+  /* Cell-specific styles */
+  .student-cell {
+    min-width: 120px;
+  }
+  
+  .intervention-cell {
+    white-space: normal;
+    word-break: break-word;
+  }
+  
+  .applied-cell {
+    text-align: center;
+  }
+  
+  .value-cell {
+    text-align: center;
+  }
+  
+  /* Form controls styling */
+  .applied-checkbox {
+    width: 1.2rem;
+    height: 1.2rem;
+    cursor: pointer;
+  }
+  
+  .value-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 0.95rem;
+    transition: border-color 0.3s;
+  }
+  
+  .value-input:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 2px rgba(10, 123, 131, 0.2);
+  }
+  
+  /* Debug info styling */
+  .debug-info-small {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0.5rem 0;
+  }
+  
+  ol.debug-info-small {
+    padding-left: 1.5rem;
+    margin-top: 0.5rem;
+  }
+  
+  ol.debug-info-small li {
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .progress-table th,
+    .progress-table td {
+      padding: 0.5rem 0.75rem;
+    }
+  }

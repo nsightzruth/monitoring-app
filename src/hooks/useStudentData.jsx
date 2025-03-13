@@ -38,7 +38,6 @@ export const useStudentData = (supabase, user, selectedTeam) => {
           };
         });
         
-        console.log('Unique teams found:', teamsData);
         setTeams(teamsData);
       } catch (err) {
         console.error('Error fetching teams:', err);
@@ -56,9 +55,7 @@ export const useStudentData = (supabase, user, selectedTeam) => {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('Fetching data for team ID:', selectedTeam);
-      
+            
       // 1. First get all students in the selected team
       const { data: studentsData, error: studentsError } = await supabase
         .from('Student')
