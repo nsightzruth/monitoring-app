@@ -216,19 +216,31 @@
   font-size: 0.85rem;
 }
   
-/* Simplified menu container - moved dropdown to portal */
-.menu-container {
+/* Simple menu container with relative positioning */
+.simple-menu-container {
   position: relative;
 }
 
-/* Dropdown menu styling - used by the portal */
-.dropdown-menu {
-  border-radius: var(--border-radius);
+/* Fixed dropdown menu styling */
+.simple-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 1000; /* High z-index to ensure it stays above table */
+  min-width: 200px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  margin-top: 8px;
+  
+  /* Additional properties to ensure menu appears on top */
+  isolation: isolate;
+  transform: translateZ(0);
 }
 
-/* These styles will be applied through inline styles by the portal */
-.menu-item {
+/* Menu items inside dropdown */
+.simple-dropdown-menu .menu-item {
   width: 100%;
   text-align: left;
   padding: 0.75rem 1rem;
@@ -243,11 +255,11 @@
   font-weight: 500;
 }
 
-.menu-item:hover {
+.simple-dropdown-menu .menu-item:hover {
   background-color: var(--light-bg);
 }
 
-.menu-item:disabled {
+.simple-dropdown-menu .menu-item:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -270,5 +282,28 @@
   .team-selector {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .simple-dropdown-menu {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .simple-dropdown-menu:before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background-color: #ddd;
+    border-radius: 2px;
+    margin: 8px auto;
   }
 }

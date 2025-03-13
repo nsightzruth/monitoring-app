@@ -4,7 +4,7 @@ import { useStudentData } from '../context/StudentDataContext';
 import FollowupForm from '../components/followups/FollowupForm';
 import FollowupsTable from '../components/followups/FollowupsTable';
 import StudentSearch from '../components/common/StudentSearch';
-import Form, { FormMessage } from '../components/common/Form';
+import { FormMessage } from '../components/common/Form';
 import '../styles/pages/FollowupPage.css';
 
 /**
@@ -15,6 +15,7 @@ const FollowupPage = ({ user, queryParams }) => {
   const [filterType, setFilterType] = useState('responsible');
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [selectedStudentName, setSelectedStudentName] = useState('');
+  const [initialFilterApplied, setInitialFilterApplied] = useState(false);
 
   // Use our followups hook
   const {
@@ -34,57 +35,54 @@ const FollowupPage = ({ user, queryParams }) => {
     changeFilterStatus,
     toggleFollowupStatus,
     savePendingStatusChanges,
-    setFilters,
-    teamStudents
+    setFilters
   } = useFollowups(user?.id);
   
   // Student context is used to check if a pre-selected student was provided
   const { selectedStudent, clearSelectedStudent } = useStudentData();
 
-  console.log("FollowupPage rendered with queryParams:", queryParams);
-  if (queryParams) {
-    console.log("queryParams type:", typeof queryParams);
-    console.log("queryParams methods:", Object.getOwnPropertyNames(Object.getPrototypeOf(queryParams)));
-  }
-
   // Process query parameters if passed from another page
   useEffect(() => {
-    // Debug log the query parameters
-    console.log("FollowupPage received queryParams:", queryParams);
-    
-    if (queryParams) {
-      // Check for student filter
-      const studentId = queryParams.get('student_id');
-      const studentName = queryParams.get('student_name');
-      
-      console.log("Extracted student_id:", studentId);
-      console.log("Extracted student_name:", studentName);
-      
-      if (studentId && studentName) {
-        setSelectedStudentId(studentId);
-        setSelectedStudentName(studentName);
-        setFilters({
-          studentId: studentId
-        });
+    if (!initialFilterApplied && queryParams && typeof queryParams.get === 'function') {
+      try {
+        // Check for student filter
+        const studentId = queryParams.get('student_id');
+        const studentName = queryParams.get('student_name');
         
-        console.log("Set filters with studentId:", studentId);
+        if (studentId && studentName) {
+          setSelectedStudentId(studentId);
+          setSelectedStudentName(studentName);
+          setFilters({
+            studentId: studentId
+          });
+          
+          setInitialFilterApplied(true);
+        }
+      } catch (err) {
+        console.error("Error processing query parameters:", err);
       }
     }
-  }, [queryParams, setFilters]);
+  }, [queryParams, setFilters, initialFilterApplied]);
 
   // Use pre-selected student from context if available
   useEffect(() => {
-    if (selectedStudent) {
-      setSelectedStudentId(selectedStudent.id);
-      setSelectedStudentName(selectedStudent.name);
-      setFilters({
-        studentId: selectedStudent.id
-      });
-      
-      // Clear selected student from context
-      clearSelectedStudent();
+    if (selectedStudent && !initialFilterApplied) {
+      try {
+        setSelectedStudentId(selectedStudent.id);
+        setSelectedStudentName(selectedStudent.name);
+        setFilters({
+          studentId: selectedStudent.id
+        });
+        
+        setInitialFilterApplied(true);
+        
+        // Clear selected student from context
+        clearSelectedStudent();
+      } catch (err) {
+        console.error("Error applying filters from selected student:", err);
+      }
     }
-  }, [selectedStudent, clearSelectedStudent, setFilters]);
+  }, [selectedStudent, clearSelectedStudent, setFilters, initialFilterApplied]);
 
   // Handler for form submission
   const handleSubmitFollowup = async (formData) => {
@@ -124,13 +122,11 @@ const FollowupPage = ({ user, queryParams }) => {
 
   // Handler for status checkbox change
   const handleStatusChange = (followupId, checked) => {
-    console.log("Page handling status change:", followupId, checked);
     toggleFollowupStatus(followupId, checked);
   };
 
   // Handler for saving status changes
   const handleSaveStatuses = async () => {
-    console.log("Page handling save statuses");
     await savePendingStatusChanges();
   };
 

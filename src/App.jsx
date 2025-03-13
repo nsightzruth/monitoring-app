@@ -57,13 +57,8 @@ function App() {
     }
   };
 
-  // Navigation handler with query params support - FIXED: Added console logging
+  // Navigation handler with query params support
   const handleNavigation = (page, params = null) => {
-    console.log(`Navigation triggered to page: ${page}`);
-    if (params) {
-      console.log('With query parameters:', params.toString());
-    }
-    
     setCurrentPage(page);
     setQueryParams(params);
   };
@@ -73,20 +68,14 @@ function App() {
       return <AuthPage onLogin={setUser} />;
     }
 
-    // FIXED: Added logging to debug the render flow
-    console.log('Rendering content for page:', currentPage);
-    console.log('Query params:', queryParams ? queryParams.toString() : 'none');
-
     switch (currentPage) {
       case 'admin':
         return <AdminPage user={user} supabase={supabase} />;
       case 'teams':
-        // FIXED: Explicitly pass the onNavigate prop
         return <TeamDashboard user={user} onNavigate={handleNavigation} />;
       case 'incidents':
         return <IncidentNotePage user={user} />;
       case 'followups':
-        // FIXED: Explicitly pass the queryParams to FollowupPage
         return <FollowupPage user={user} queryParams={queryParams} />;
       case 'referrals':
       default:
