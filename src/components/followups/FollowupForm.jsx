@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useForm } from '../../hooks/useForm';
-import { createValidator, isEmpty } from '../../utils/validation';
 import { useStudentData } from '../../context/StudentDataContext';
 import Form, { FormGroup, FormRow, FormActions, FormMessage } from '../common/Form';
 import FormField from '../common/FormField';
@@ -17,50 +15,8 @@ const FOLLOWUP_TYPES = [
   { value: 'Other', label: 'Other' }
 ];
 
-// Create a dynamic validator function based on form data
-const createFollowupValidator = (formData) => {
-  const baseRules = {
-    studentName: [
-      { test: isEmpty, message: 'Student name is required' }
-    ],
-    type: [
-      { test: isEmpty, message: 'Followup type is required' }
-    ],
-    responsiblePerson: [
-      { test: isEmpty, message: 'Responsible person is required' }
-    ]
-  };
-
-  // Add type-specific validation
-  if (formData.type === 'Intervention') {
-    return {
-      ...baseRules,
-      intervention: [
-        { test: isEmpty, message: 'Intervention details are required' }
-      ],
-      metric: [
-        { test: isEmpty, message: 'Measurement metric is required' }
-      ],
-      startDate: [
-        { test: isEmpty, message: 'Start date is required' }
-      ],
-      endDate: [
-        { test: isEmpty, message: 'End date is required' }
-      ]
-    };
-  } else {
-    // For non-intervention types, followup notes are mandatory
-    return {
-      ...baseRules,
-      followupNotes: [
-        { test: isEmpty, message: 'Followup notes are required for this type' }
-      ]
-    };
-  }
-};
-
 /**
- * Component for submitting new followups
+ * Simplified component for submitting new followups - focused on fixing submission issues
  */
 const FollowupForm = ({ 
   onSubmit, 
@@ -73,123 +29,72 @@ const FollowupForm = ({
   // Access student context to find if there's a pre-selected student
   const { selectedStudent, clearSelectedStudent } = useStudentData();
   
-  // Track if we're in view mode (viewing existing followup)
+  // State for form
   const [viewMode, setViewMode] = useState(false);
-  // Track if we're in edit mode
   const [isEditMode, setIsEditMode] = useState(editMode);
-  // Track if the student is valid (exists in the database)
   const [validStudent, setValidStudent] = useState(false);
-  // Track any server errors
   const [serverError, setServerError] = useState(null);
-  // Track success message
   const [successMessage, setSuccessMessage] = useState(null);
-
-  // Get today's date for default values
-  const todayDate = new Date().toISOString().split('T')[0];
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Initialize form hook
-  const {
-    values,
-    errors,
-    touched,
-    isSubmitting,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    resetForm,
-    setFormValues
-  } = useForm(
-    // Initial values
-    {
-      studentName: '',
-      studentId: '',
-      type: FOLLOWUP_TYPES[3].value, // Index 3 corresponds to 'Test'
-      responsiblePerson: '',
-      followupNotes: '',
-      intervention: '',
-      metric: '',
-      startDate: todayDate,
-      endDate: ''
-    },
-    // Dynamic validator function
-    (formData) => {
-      const validator = createValidator(createFollowupValidator(formData));
-      return validator(formData);
-    },
-    // Submit handler
-    async (formData) => {
-      // Only check validStudent for new followups, not when editing
-      if (!validStudent && !isEditMode) {
-        return { success: false, error: 'Please select a valid student from the suggestions' };
-      }
+  // Form data state
+  const [formData, setFormData] = useState({
+    studentName: '',
+    studentId: '',
+    type: FOLLOWUP_TYPES[3].value, // 'Test'
+    responsiblePerson: '',
+    followupNotes: '',
+    intervention: '',
+    metric: '',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: ''
+  });
+  
+  // Form errors state
+  const [formErrors, setFormErrors] = useState({});
+  
+  // Prepare team members for dropdown - do this early
+  const responsiblePersonOptions = teamMembers.map(member => ({
+    value: member.id,
+    label: member.name
+  }));
 
-      try {
-        setServerError(null);
-        setSuccessMessage(null);
-        
-        let result;
-        if (isEditMode && followupToView) {
-          // Edit existing followup
-          const updateData = {
-            type: formData.type,
-            responsible_person: formData.responsiblePerson,
-            followup_notes: formData.followupNotes,
-            intervention: formData.type === 'Intervention' ? formData.intervention : null,
-            metric: formData.type === 'Intervention' ? formData.metric : null,
-            start_date: formData.type === 'Intervention' ? formData.startDate : null,
-            end_date: formData.type === 'Intervention' ? formData.endDate : null
-          };
-          
-          result = await onEdit(followupToView.id, updateData);
-        } else {
-          // Create new followup
-          result = await onSubmit(formData);
-        }
-        
-        if (result.success) {
-          // Reset form on success
-          if (!isEditMode) {
-            resetForm();
-            setValidStudent(false);
-          } else {
-            // In edit mode, just exit edit mode
-            setIsEditMode(false);
-            setViewMode(true);
-          }
-          setSuccessMessage(isEditMode ? 'Followup updated successfully!' : 'Followup submitted successfully!');
-          return result;
-        } else {
-          setServerError(result.error || 'Failed to submit followup');
-          throw new Error(result.error || 'Failed to submit followup');
-        }
-      } catch (error) {
-        console.error('Error submitting followup:', error);
-        setServerError(error.message || 'An unexpected error occurred');
-        throw error;
+  // When team members load, if there's only one, auto-select it
+  useEffect(() => {
+    if (teamMembers.length === 1 && !formData.responsiblePerson && !followupToView) {
+      setFormData(prev => ({
+        ...prev,
+        responsiblePerson: teamMembers[0].id
+      }));
+      
+      // Clear any error related to responsiblePerson
+      if (formErrors.responsiblePerson) {
+        setFormErrors(prev => {
+          const newErrors = {...prev};
+          delete newErrors.responsiblePerson;
+          return newErrors;
+        });
       }
     }
-  );
+  }, [teamMembers, formData.responsiblePerson, followupToView, formErrors]);
 
-  // Use pre-selected student if available (from team dashboard)
+  // Use pre-selected student if available
   useEffect(() => {
     if (selectedStudent && !followupToView) {
-      setFormValues(prevData => ({
-        ...prevData,
+      setFormData(prev => ({
+        ...prev,
         studentName: selectedStudent.name || '',
         studentId: selectedStudent.id || ''
       }));
-      // Set validStudent to true when student is pre-populated
       setValidStudent(true);
-      
-      // Clear the selected student from context after using it
       clearSelectedStudent();
     }
-  }, [selectedStudent, clearSelectedStudent, followupToView, setFormValues]);
+  }, [selectedStudent, clearSelectedStudent, followupToView]);
 
   // Update form when followupToView changes
   useEffect(() => {
     if (followupToView) {
-      setFormValues({
+      setFormData({
         studentName: followupToView.student_name || '',
         studentId: followupToView.student_id || '',
         type: followupToView.type || FOLLOWUP_TYPES[0].value,
@@ -197,40 +102,226 @@ const FollowupForm = ({
         followupNotes: followupToView.followup_notes || '',
         intervention: followupToView.intervention || '',
         metric: followupToView.metric || '',
-        startDate: followupToView.start_date || todayDate,
+        startDate: followupToView.start_date || new Date().toISOString().split('T')[0],
         endDate: followupToView.end_date || ''
       });
       setViewMode(true);
       setIsEditMode(editMode);
       setValidStudent(true);
+      
+      // Clear validation errors when viewing existing followup
+      setFormErrors({});
     } else {
       setViewMode(false);
       setIsEditMode(false);
-      // Only reset valid student if it's not prefilled from context
       if (!selectedStudent) {
         setValidStudent(false);
       }
     }
-  }, [followupToView, editMode, setFormValues, selectedStudent, todayDate]);
+  }, [followupToView, editMode, selectedStudent]);
+
+  // Handle form input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Debug logging
+    console.log(`Field ${name} changed to:`, value);
+    
+    // Clear errors for this field when value changes
+    if (formErrors[name]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+  
+  // Handle field change directly (for custom inputs)
+  const handleFieldChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Debug logging
+    console.log(`Field ${name} changed directly to:`, value);
+    
+    // Clear errors for this field when value changes
+    if (formErrors[name]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
 
   // Handle student selection from the dropdown
   const handleStudentSelect = (student) => {
-    setFormValues({
-      ...values,
+    setFormData(prev => ({
+      ...prev,
       studentName: student.name,
       studentId: student.id
-    });
+    }));
     setValidStudent(true);
+  };
+
+  // Validate form data
+  const validateForm = (data) => {
+    const errors = {};
+    
+    // Basic validations
+    if (!data.studentName) {
+      errors.studentName = 'Student name is required';
+    }
+    
+    if (!data.type) {
+      errors.type = 'Type is required';
+    }
+    
+    // Debug logging to help identify the issue
+    console.log('Validating responsiblePerson value:', data.responsiblePerson);
+    console.log('Type of responsiblePerson:', typeof data.responsiblePerson);
+    console.log('Is empty check:', !data.responsiblePerson);
+    
+    // FIXED: More robust check for responsiblePerson
+    if (!data.responsiblePerson && data.responsiblePerson !== 0) {
+      errors.responsiblePerson = 'Responsible person is required';
+    }
+    
+    // Type-specific validations
+    if (data.type === 'Intervention') {
+      if (!data.intervention) {
+        errors.intervention = 'Intervention details are required';
+      }
+      
+      if (!data.metric) {
+        errors.metric = 'Metric is required';
+      }
+      
+      if (!data.startDate) {
+        errors.startDate = 'Start date is required';
+      }
+      
+      if (!data.endDate) {
+        errors.endDate = 'End date is required';
+      }
+    } else {
+      // For non-intervention types
+      if (!data.followupNotes) {
+        errors.followupNotes = 'Followup notes are required';
+      }
+    }
+    
+    return errors;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Check if we have a valid student
+    if (!validStudent && !isEditMode) {
+      setServerError('Please select a valid student from the suggestions');
+      return;
+    }
+    
+    // Debug log current form state
+    console.log('Form data before validation:', formData);
+    console.log('Team members available:', teamMembers);
+    console.log('Responsible person options:', responsiblePersonOptions);
+    
+    // Validate form data
+    const errors = validateForm(formData);
+    setFormErrors(errors);
+    
+    // If there are errors, don't submit
+    if (Object.keys(errors).length > 0) {
+      console.log('Validation errors:', errors);
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      setServerError(null);
+      setSuccessMessage(null);
+      
+      console.log('Submitting form data:', formData);
+      
+      let result;
+      if (isEditMode && followupToView) {
+        // Edit existing followup
+        const updateData = {
+          type: formData.type,
+          responsible_person: formData.responsiblePerson,
+          followup_notes: formData.followupNotes,
+          intervention: formData.type === 'Intervention' ? formData.intervention : null,
+          metric: formData.type === 'Intervention' ? formData.metric : null,
+          start_date: formData.type === 'Intervention' ? formData.startDate : null,
+          end_date: formData.type === 'Intervention' ? formData.endDate : null
+        };
+        
+        result = await onEdit(followupToView.id, updateData);
+      } else {
+        // Create new followup
+        result = await onSubmit(formData);
+      }
+      
+      console.log('Submission result:', result);
+      
+      if (result.success) {
+        // Success handling
+        if (!isEditMode) {
+          // Reset form for new submissions
+          setFormData({
+            studentName: '',
+            studentId: '',
+            type: FOLLOWUP_TYPES[3].value, // 'Test'
+            responsiblePerson: '',
+            followupNotes: '',
+            intervention: '',
+            metric: '',
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: ''
+          });
+          setValidStudent(false);
+        } else {
+          // In edit mode, exit edit mode on success
+          setIsEditMode(false);
+          setViewMode(true);
+        }
+        
+        setSuccessMessage(isEditMode ? 'Followup updated successfully!' : 'Followup submitted successfully!');
+      } else {
+        setServerError(result.error || 'Failed to submit followup');
+      }
+    } catch (error) {
+      console.error('Error submitting followup:', error);
+      setServerError(error.message || 'An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handle form reset
   const handleReset = () => {
-    resetForm();
+    setFormData({
+      studentName: '',
+      studentId: '',
+      type: FOLLOWUP_TYPES[3].value, // 'Test'
+      responsiblePerson: '',
+      followupNotes: '',
+      intervention: '',
+      metric: '',
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: ''
+    });
+    setFormErrors({});
     setViewMode(false);
     setIsEditMode(false);
     setValidStudent(false);
     setServerError(null);
     setSuccessMessage(null);
+    
     if (onReset) {
       onReset();
     }
@@ -241,12 +332,6 @@ const FollowupForm = ({
     setIsEditMode(true);
     setViewMode(false);
   };
-
-  // Prepare team members for dropdown
-  const responsiblePersonOptions = teamMembers.map(member => ({
-    value: member.id,
-    label: member.name
-  }));
 
   return (
     <div className="followup-form-container">
@@ -270,15 +355,16 @@ const FollowupForm = ({
         </div>
       )}
       
-      <Form onSubmit={handleSubmit} className="followup-form">
+      <form onSubmit={handleSubmit} className="followup-form">
         <div className="inline-form-group">
           <label htmlFor="studentName">Student Name:</label>
           <div className="student-search-container">
             <StudentSearch
-              value={values.studentName}
+              id="studentName"
+              value={formData.studentName}
               onChange={(value) => {
-                handleChange('studentName', value);
-                if (validStudent && value !== values.studentName) {
+                handleFieldChange('studentName', value);
+                if (validStudent && value !== formData.studentName) {
                   setValidStudent(false);
                 }
               }}
@@ -286,8 +372,8 @@ const FollowupForm = ({
               disabled={isSubmitting || (viewMode && !isEditMode)}
               required
             />
-            {touched.studentName && errors.studentName && (
-              <span className="form-error">{errors.studentName}</span>
+            {formErrors.studentName && (
+              <span className="form-error">{formErrors.studentName}</span>
             )}
           </div>
         </div>
@@ -299,8 +385,10 @@ const FollowupForm = ({
             name="type"
             label="Followup Type"
             options={FOLLOWUP_TYPES}
-            value={values.type}
+            value={formData.type}
             onChange={handleChange}
+            error={!!formErrors.type}
+            errorMessage={formErrors.type}
             disabled={isSubmitting || (viewMode && !isEditMode)}
             required
           />
@@ -311,15 +399,17 @@ const FollowupForm = ({
             name="responsiblePerson"
             label="Responsible Person"
             options={responsiblePersonOptions}
-            value={values.responsiblePerson}
+            value={formData.responsiblePerson}
             onChange={handleChange}
+            error={!!formErrors.responsiblePerson}
+            errorMessage={formErrors.responsiblePerson}
             disabled={isSubmitting || (viewMode && !isEditMode)}
             required
           />
         </FormRow>
         
         {/* Show intervention fields if type is Intervention */}
-        {values.type === 'Intervention' && (
+        {formData.type === 'Intervention' && (
           <div className="intervention-section">
             <h3>Intervention Details</h3>
             <FormRow>
@@ -328,11 +418,10 @@ const FollowupForm = ({
                 id="intervention"
                 name="intervention"
                 label="Intervention"
-                value={values.intervention}
+                value={formData.intervention}
                 onChange={handleChange}
-                onBlur={handleBlur}
-                error={touched.intervention && !!errors.intervention}
-                errorMessage={errors.intervention}
+                error={!!formErrors.intervention}
+                errorMessage={formErrors.intervention}
                 placeholder="Describe the intervention"
                 disabled={isSubmitting || (viewMode && !isEditMode)}
                 required
@@ -343,11 +432,10 @@ const FollowupForm = ({
                 id="metric"
                 name="metric"
                 label="Metric"
-                value={values.metric}
+                value={formData.metric}
                 onChange={handleChange}
-                onBlur={handleBlur}
-                error={touched.metric && !!errors.metric}
-                errorMessage={errors.metric}
+                error={!!formErrors.metric}
+                errorMessage={formErrors.metric}
                 placeholder="How will this be measured?"
                 disabled={isSubmitting || (viewMode && !isEditMode)}
                 required
@@ -360,11 +448,10 @@ const FollowupForm = ({
                 id="startDate"
                 name="startDate"
                 label="Start Date"
-                value={values.startDate}
+                value={formData.startDate}
                 onChange={handleChange}
-                onBlur={handleBlur}
-                error={touched.startDate && !!errors.startDate}
-                errorMessage={errors.startDate}
+                error={!!formErrors.startDate}
+                errorMessage={formErrors.startDate}
                 disabled={isSubmitting || (viewMode && !isEditMode)}
                 required
               />
@@ -374,11 +461,10 @@ const FollowupForm = ({
                 id="endDate"
                 name="endDate"
                 label="End Date"
-                value={values.endDate}
+                value={formData.endDate}
                 onChange={handleChange}
-                onBlur={handleBlur}
-                error={touched.endDate && !!errors.endDate}
-                errorMessage={errors.endDate}
+                error={!!formErrors.endDate}
+                errorMessage={formErrors.endDate}
                 disabled={isSubmitting || (viewMode && !isEditMode)}
                 required
               />
@@ -392,14 +478,13 @@ const FollowupForm = ({
             id="followupNotes"
             name="followupNotes"
             label="Followup Notes"
-            value={values.followupNotes}
+            value={formData.followupNotes}
             onChange={handleChange}
-            onBlur={handleBlur}
-            error={touched.followupNotes && !!errors.followupNotes}
-            errorMessage={errors.followupNotes}
+            error={!!formErrors.followupNotes}
+            errorMessage={formErrors.followupNotes}
             placeholder="Additional details or context"
             disabled={isSubmitting || (viewMode && !isEditMode)}
-            required={values.type !== 'Intervention'}
+            required={formData.type !== 'Intervention'}
           />
         </FormGroup>
         
@@ -436,7 +521,6 @@ const FollowupForm = ({
                 type="submit" 
                 variant="primary" 
                 isLoading={isSubmitting}
-                // Simplified: Only disable when submitting or in view mode
                 disabled={isSubmitting || (viewMode && !isEditMode)}
               >
                 {isEditMode ? 'Save Changes' : 'Submit Followup'}
@@ -444,7 +528,7 @@ const FollowupForm = ({
             </>
           )}
         </FormActions>
-      </Form>
+      </form>
     </div>
   );
 };

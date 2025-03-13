@@ -27,12 +27,9 @@
   font-size: 0.95rem;
 }
 
-/* Custom table wrapper to manage overflow */
+/* Custom table wrapper */
 .custom-table-wrapper {
   width: 100%;
-  position: relative;
-  /* Use visible to prevent scrollbar on menu open */
-  overflow: visible;
 }
   
 /* Student cell styling */
@@ -106,21 +103,22 @@
   color: var(--primary-color);
 }
 
-/* Notes styling */
+/* Notes styling with fixed widths and single-line truncation */
 .notes-cell {
   max-width: 300px;
-  white-space: pre-line;
+  min-width: 250px;
+  width: 300px;
 }
 
+/* Single-line truncation for notes */
 .truncate-note {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   margin: 0 0 0.25rem 0;
   padding: 0 0 0.25rem 0;
   max-width: 300px;
   font-size: 0.9rem;
-  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
   
 .no-notes {
@@ -128,9 +126,11 @@
   font-style: italic;
 }
   
-/* Followups column styling */
+/* Followups column styling with controlled width */
 .followups-cell {
   max-width: 250px;
+  min-width: 200px;
+  width: 250px;
 }
 
 .followups-list {
@@ -146,11 +146,13 @@
   gap: 0.3rem;
 }
 
+/* Single-line truncation for followup content */
 .followup-content {
   font-size: 0.85rem;
-  line-height: 1.4;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
 }
 
 .followup-type {
@@ -214,45 +216,18 @@
   font-size: 0.85rem;
 }
   
-/* Action menu styling */
-.actions-cell {
-  position: relative;
-  z-index: 1;
-}
-
+/* Simplified menu container - moved dropdown to portal */
 .menu-container {
   position: relative;
 }
 
-.menu-container.active {
-  z-index: 100;
-}
-
+/* Dropdown menu styling - used by the portal */
 .dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: white;
-  min-width: 200px;
   border-radius: var(--border-radius);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
-  margin-top: 8px;
-  z-index: 1000; /* Ensure menu appears above other elements */
 }
 
-.dropdown-menu::before {
-  content: "";
-  position: absolute;
-  top: -8px;
-  right: 14px;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 8px solid white;
-}
-
+/* These styles will be applied through inline styles by the portal */
 .menu-item {
   width: 100%;
   text-align: left;
@@ -281,17 +256,13 @@
   flex-shrink: 0;
 }
 
-/* Fix for the table container to prevent horizontal scrollbar */
-.table-container {
-  overflow-x: visible;
+/* Table column width control */
+.students-table th:nth-child(4) {
+  min-width: 300px;
 }
 
-/* Ensure parent containers don't clip the dropdown */
-.team-dashboard,
-.table-section,
-.standard-table-container,
-.table-container {
-  overflow: visible;
+.students-table th:nth-child(5) {
+  min-width: 250px;
 }
 
 /* Responsive adjustments */
@@ -299,10 +270,5 @@
   .team-selector {
     flex-direction: column;
     align-items: flex-start;
-  }
-  
-  .dropdown-menu {
-    right: auto;
-    left: 0;
   }
 }

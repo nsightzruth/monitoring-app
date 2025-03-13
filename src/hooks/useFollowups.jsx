@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { followupService } from '../services/supabase';
-import { incidentService } from '../services/supabase';
 
 /**
  * Custom hook for managing followups data and operations
@@ -100,22 +99,42 @@ export const useFollowups = (staffId) => {
   }, [staffId]);
 
   /**
-   * Add a new followup
-   * @param {Object} followupData - Followup data to add
+   * Add a new followup - SIMPLIFIED version for better debugging
+   * @param {Object} formData - Form data for the new followup
    * @returns {Promise<Object>} - Result of the operation
    */
-  const addFollowup = useCallback(async (followupData) => {
+  const addFollowup = useCallback(async (formData) => {
     try {
+      // Show loading state
       setSubmitStatus({ loading: true, error: null, success: false });
       
+      // Log the data to help with debugging
+      console.log('Creating followup with data:', formData);
+      
+      // Prepare the data for the service call
+      const followupData = {
+        studentId: formData.studentId,
+        type: formData.type,
+        responsiblePerson: formData.responsiblePerson,
+        followupNotes: formData.followupNotes || '',
+        intervention: formData.intervention,
+        metric: formData.metric,
+        startDate: formData.startDate,
+        endDate: formData.endDate
+      };
+      
+      // Call the service
       const newFollowup = await followupService.createFollowup(followupData);
       
-      // Update state with the new followup
+      // Update the state with the new followup
       setFollowups(prevFollowups => [newFollowup, ...prevFollowups]);
       
+      // Set success state
       setSubmitStatus({ loading: false, error: null, success: true });
+      
       return { success: true, data: newFollowup };
     } catch (err) {
+      // Handle and log errors
       console.error('Error adding followup:', err);
       setSubmitStatus({ loading: false, error: err.message, success: false });
       return { success: false, error: err.message };
@@ -131,6 +150,9 @@ export const useFollowups = (staffId) => {
   const updateFollowup = useCallback(async (followupId, followupData) => {
     try {
       setSubmitStatus({ loading: true, error: null, success: false });
+      
+      // Log data for debugging
+      console.log('Updating followup:', followupId, followupData);
       
       const updatedFollowup = await followupService.updateFollowup(followupId, followupData);
       
@@ -270,18 +292,29 @@ export const useFollowups = (staffId) => {
         return { success: true, data: [] };
       }
       
+      const results = [];
+      
       // Process each update
       for (const update of updates) {
         if (update.status === 'Completed') {
           // For each completed followup, mark it complete and create a note
           console.log("Completing followup:", update.id);
-          await followupService.markFollowupComplete(update.id, staffId);
+          
+          // FIXED: Directly use the markFollowupComplete service function
+          // This ensures the note creation functionality from the service is used
+          const result = await followupService.markFollowupComplete(update.id, staffId);
+          if (result.success) {
+            results.push(result.data);
+          } else {
+            console.error("Error completing followup:", update.id, result.error);
+          }
         } else {
           // For other status changes, just update the status
           console.log("Updating followup status:", update.id, update.status);
-          await followupService.updateFollowup(update.id, {
+          const updatedFollowup = await followupService.updateFollowup(update.id, {
             followup_status: update.status
           });
+          results.push(updatedFollowup);
         }
       }
       
@@ -292,13 +325,26 @@ export const useFollowups = (staffId) => {
       await fetchFollowups();
       
       setSubmitStatus({ loading: false, error: null, success: true });
-      return { success: true, data: [] };
+      return { success: true, data: results };
     } catch (err) {
       console.error('Error saving status changes:', err);
       setSubmitStatus({ loading: false, error: err.message, success: false });
       return { success: false, error: err.message };
     }
   }, [pendingStatusChanges, staffId, fetchFollowups]);
+
+  /**
+   * Get draft incidents and notes for the current staff member
+   * @returns {Promise<Array>} - Array of draft incident/note records
+   */
+  const getDraftsByStaff = useCallback(async () => {
+    try {
+      return await followupService.getDraftsByStaff(staffId);
+    } catch (err) {
+      console.error('Error fetching drafts:', err);
+      return [];
+    }
+  }, [staffId]);
 
   return {
     followups,
@@ -323,6 +369,9 @@ export const useFollowups = (staffId) => {
     changeFilterStatus,
     toggleFollowupStatus,
     savePendingStatusChanges,
-    setFilters
+    setFilters,
+    getDraftsByStaff
   };
 };
+
+export default useFollowups;

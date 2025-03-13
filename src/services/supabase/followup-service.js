@@ -173,11 +173,12 @@ export const followupService = {
         studentName: followup.Student?.name || 'Unknown Student',
         type: 'Note',
         date: new Date().toISOString().split('T')[0],
-        time: '',
+        time: new Date().toTimeString().slice(0, 5),
         note: noteContent,
         isDraft: false
       };
       
+      // FIXED: Explicitly passing staffId to createIncident
       const note = await incidentService.createIncident(incidentData, staffId);
       
       return { 
@@ -238,6 +239,10 @@ export const followupService = {
     try {
       const now = new Date().toISOString();
       
+      // Log the data for debugging
+      console.log('createFollowup received data:', JSON.stringify(followupData, null, 2));
+      
+      // Create the object to insert into Supabase
       const followupObject = {
         student_id: followupData.studentId,
         type: followupData.type,
@@ -256,6 +261,8 @@ export const followupService = {
         followupObject.end_date = followupData.endDate;
       }
       
+      console.log('Inserting followup to Supabase:', JSON.stringify(followupObject, null, 2));
+      
       const { data, error } = await supabase
         .from('Followup')
         .insert([followupObject])
@@ -267,7 +274,15 @@ export const followupService = {
           Staff:responsible_person (name)
         `);
           
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error creating followup:', error);
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        console.error('No data returned from Supabase insert');
+        throw new Error('Failed to create followup - no data returned');
+      }
       
       // Format the returned data
       const formattedRecord = {
@@ -277,6 +292,7 @@ export const followupService = {
         responsible_person_name: data[0].Staff?.name || 'Unassigned',
       };
       
+      console.log('Successfully created followup:', formattedRecord.id);
       return formattedRecord;
     } catch (error) {
       console.error('Error creating followup:', error);
@@ -460,5 +476,3 @@ export const followupService = {
     }
   }
 };
-
-export default followupService;

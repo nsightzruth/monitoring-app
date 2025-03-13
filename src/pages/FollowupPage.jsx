@@ -41,12 +41,24 @@ const FollowupPage = ({ user, queryParams }) => {
   // Student context is used to check if a pre-selected student was provided
   const { selectedStudent, clearSelectedStudent } = useStudentData();
 
+  console.log("FollowupPage rendered with queryParams:", queryParams);
+  if (queryParams) {
+    console.log("queryParams type:", typeof queryParams);
+    console.log("queryParams methods:", Object.getOwnPropertyNames(Object.getPrototypeOf(queryParams)));
+  }
+
   // Process query parameters if passed from another page
   useEffect(() => {
+    // Debug log the query parameters
+    console.log("FollowupPage received queryParams:", queryParams);
+    
     if (queryParams) {
       // Check for student filter
       const studentId = queryParams.get('student_id');
       const studentName = queryParams.get('student_name');
+      
+      console.log("Extracted student_id:", studentId);
+      console.log("Extracted student_name:", studentName);
       
       if (studentId && studentName) {
         setSelectedStudentId(studentId);
@@ -54,6 +66,8 @@ const FollowupPage = ({ user, queryParams }) => {
         setFilters({
           studentId: studentId
         });
+        
+        console.log("Set filters with studentId:", studentId);
       }
     }
   }, [queryParams, setFilters]);

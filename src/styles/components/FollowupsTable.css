@@ -19,16 +19,13 @@
   font-weight: normal;
 }
 
+/* FIXED: Better truncation for note cells - single line instead of multiple lines */
 .note-cell {
   max-width: 300px;
-  white-space: pre-line;
+  min-width: 250px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  -webkit-box-orient: vertical;
-  line-height: 1.3;
-  max-height: calc(1.3em * 5);
 }
 
 .no-notes {
@@ -76,6 +73,35 @@
 .type-badge.test {
   background-color: var(--primary-color);
   color: var(--light-text);
+}
+
+/* FIXED: Set explicit widths for the table columns */
+.followups-table th:nth-child(1) {
+  width: 8%;
+}
+
+.followups-table th:nth-child(2) {
+  width: 10%;
+}
+
+.followups-table th:nth-child(3) {
+  width: 15%;
+}
+
+.followups-table th:nth-child(4) {
+  width: 12%;
+}
+
+.followups-table th:nth-child(5) {
+  width: 12%;
+}
+
+.followups-table th:nth-child(6) {
+  width: 25%;
+}
+
+.followups-table th:nth-child(7) {
+  width: 18%;
 }
 
 /* Table header with actions and filter */

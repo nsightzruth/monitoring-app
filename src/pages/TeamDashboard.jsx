@@ -7,6 +7,7 @@ import { IconButton } from '../components/common/Button';
 import FormMessage from '../components/common/Form';
 import '../styles/pages/TeamDashboard.css';
 import { formatLocalDate } from '../utils/dateUtils';
+import ReactDOM from 'react-dom';
 
 /**
  * Page component for team dashboard
@@ -14,6 +15,45 @@ import { formatLocalDate } from '../utils/dateUtils';
 const TeamDashboard = ({ user, onNavigate }) => {
   const [activeMenu, setActiveMenu] = useState(null);
   const menuRefs = useRef({});
+  
+  // Create a ref for the portal container
+  const portalContainerRef = useRef(null);
+  
+  // Create portal container if it doesn't exist
+  useEffect(() => {
+    // Create a div for the portal if it doesn't exist
+    if (!document.getElementById('dropdown-portal')) {
+      const portalDiv = document.createElement('div');
+      portalDiv.id = 'dropdown-portal';
+      portalDiv.style.position = 'absolute';
+      portalDiv.style.top = '0';
+      portalDiv.style.left = '0';
+      portalDiv.style.width = '100%';
+      portalDiv.style.height = '0';
+      portalDiv.style.overflow = 'visible';
+      portalDiv.style.zIndex = '9999';
+      document.body.appendChild(portalDiv);
+      portalContainerRef.current = portalDiv;
+    } else {
+      portalContainerRef.current = document.getElementById('dropdown-portal');
+    }
+    
+    // Clean up the portal container when component unmounts
+    return () => {
+      // Only remove if this component created it
+      if (document.getElementById('dropdown-portal') && !document.getElementById('dropdown-portal').hasAttribute('data-persistent')) {
+        document.body.removeChild(document.getElementById('dropdown-portal'));
+      }
+    };
+  }, []);
+
+  // Check if onNavigate prop is available
+  useEffect(() => {
+    // FIXED: Check and log navigation prop
+    if (!onNavigate) {
+      console.error('TeamDashboard: onNavigate prop is missing');
+    }
+  }, [onNavigate]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -77,6 +117,8 @@ const TeamDashboard = ({ user, onNavigate }) => {
       return;
     }
     
+    console.log('Add note clicked for student:', student.name);
+    
     // Store the selected student in context
     selectStudent({
       id: student.id,
@@ -90,7 +132,10 @@ const TeamDashboard = ({ user, onNavigate }) => {
     
     // Navigate to incidents page
     if (onNavigate) {
+      console.log('Navigating to incidents page');
       onNavigate('incidents');
+    } else {
+      console.error('onNavigate prop is not available for note creation');
     }
   };
 
@@ -101,6 +146,8 @@ const TeamDashboard = ({ user, onNavigate }) => {
       console.error('Cannot add followup: Missing student data', student);
       return;
     }
+    
+    console.log('Add/Update Followup clicked for student:', student.name);
     
     // Store the selected student in context
     selectStudent({
@@ -120,7 +167,10 @@ const TeamDashboard = ({ user, onNavigate }) => {
     
     // Navigate to followups page
     if (onNavigate) {
+      console.log('Navigating to followups page with params:', queryParams.toString());
       onNavigate('followups', queryParams);
+    } else {
+      console.error('onNavigate prop is not available for followup creation');
     }
   };
 
@@ -129,6 +179,99 @@ const TeamDashboard = ({ user, onNavigate }) => {
     value: team.id,
     label: team.name
   }));
+
+  // Function to render dropdown menu through a portal
+  const renderDropdownMenu = (item) => {
+    if (activeMenu !== item.id || !portalContainerRef.current) return null;
+    
+    // Get position for the dropdown
+    const menuEl = menuRefs.current[item.id];
+    if (!menuEl) return null;
+    
+    const rect = menuEl.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    
+    // Default positioning (align left with the button)
+    let leftPosition = rect.left + window.scrollX;
+    
+    // Check if dropdown would go beyond right edge of viewport
+    // Assuming 200px as minimum dropdown width
+    const dropdownWidth = 200;
+    if (leftPosition + dropdownWidth > viewportWidth) {
+      // Align right edge of dropdown with right edge of button
+      leftPosition = (rect.right + window.scrollX) - dropdownWidth;
+      
+      // If still off-screen after adjustment, align right with viewport edge
+      if (leftPosition + dropdownWidth > viewportWidth) {
+        leftPosition = viewportWidth - dropdownWidth - 10; // 10px padding from edge
+      }
+    }
+    
+    const dropdownStyle = {
+      position: 'fixed',
+      top: `${rect.bottom + window.scrollY}px`,
+      left: `${leftPosition}px`,
+      zIndex: 9999,
+      minWidth: '200px',
+      backgroundColor: 'white',
+      borderRadius: '4px',
+      boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
+      overflow: 'hidden',
+      marginTop: '8px'
+    };
+    
+    return ReactDOM.createPortal(
+      <div 
+        className="dropdown-menu"
+        style={dropdownStyle}
+      >
+        <button 
+          className="menu-item" 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleMarkReviewed(item.id);
+          }}
+          disabled={actionStatus.loading}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+          Reviewed today
+        </button>
+        
+        <button 
+          className="menu-item" 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddNote(item._fullData);
+          }}
+          disabled={actionStatus.loading}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Add note
+        </button>
+
+        <button 
+          className="menu-item" 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddFollowup(item._fullData);
+          }}
+          disabled={actionStatus.loading}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+          </svg>
+          Add/Update Followup
+        </button>
+      </div>,
+      portalContainerRef.current
+    );
+  };
 
   // Prepare student data for the table
   const tableData = students.map(student => {
@@ -280,7 +423,7 @@ const TeamDashboard = ({ user, onNavigate }) => {
       render: (item) => (
         <div className="actions-cell">
           <div 
-            className={`menu-container ${activeMenu === item.id ? 'active' : ''}`} 
+            className="menu-container"
             ref={el => menuRefs.current[item.id] = el}
           >
             <IconButton 
@@ -298,53 +441,8 @@ const TeamDashboard = ({ user, onNavigate }) => {
               }
             />
             
-            {activeMenu === item.id && (
-              <div className="dropdown-menu">
-                <button 
-                  className="menu-item" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMarkReviewed(item.id);
-                  }}
-                  disabled={actionStatus.loading}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 11l3 3L22 4"></path>
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                  </svg>
-                  Reviewed today
-                </button>
-                
-                <button 
-                  className="menu-item" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddNote(item._fullData);
-                  }}
-                  disabled={actionStatus.loading}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                  Add note
-                </button>
-
-                <button 
-                  className="menu-item" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddFollowup(item._fullData);
-                  }}
-                  disabled={actionStatus.loading}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                  </svg>
-                  Add/Update Followup
-                </button>
-              </div>
-            )}
+            {/* Render dropdown through portal */}
+            {renderDropdownMenu(item)}
           </div>
         </div>
       )
