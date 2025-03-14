@@ -178,7 +178,10 @@ export const useForm = (initialValues = {}, validate = () => ({}), onSubmit = ()
    * Set form values programmatically
    * @param {Object|Function} newValues - New form values or updater function
    */
-  const setFormValues = useCallback((newValues) => {
+  const setFormValues = useCallback((newValues, options = {}) => {
+    // Default options
+    const { setAsTouched = false } = options;
+    
     setValues(prev => {
       const updatedValues = typeof newValues === 'function' 
         ? newValues(prev) 
@@ -188,6 +191,21 @@ export const useForm = (initialValues = {}, validate = () => ({}), onSubmit = ()
       latestValues.current = updatedValues;
       return updatedValues;
     });
+    
+    if (setAsTouched) {
+      const fieldsToTouch = typeof newValues === 'function'
+        ? Object.keys(newValues(latestValues.current))
+        : Object.keys(newValues);
+      
+      setTouched(prev => {
+        const newTouched = { ...prev };
+        fieldsToTouch.forEach(field => {
+          newTouched[field] = true;
+        });
+        latestTouched.current = newTouched;
+        return newTouched;
+      });
+    }
   }, []);
   
   // Update latestValues ref when values change
@@ -246,6 +264,7 @@ export const useForm = (initialValues = {}, validate = () => ({}), onSubmit = ()
     handleBlur,
     handleSubmit,
     resetForm,
-    setFormValues
+    setFormValues,
+    setTouched
   };
 };

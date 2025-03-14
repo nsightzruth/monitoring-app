@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStudentData } from '../../context/StudentDataContext';
-import Form, { FormGroup, FormRow, FormActions, FormMessage } from '../common/Form';
+import { FormGroup, FormRow, FormActions, FormMessage } from '../common/Form';
 import FormField from '../common/FormField';
 import Button from '../common/Button';
 import StudentSearch from '../common/StudentSearch';
@@ -36,7 +36,17 @@ const FollowupForm = ({
   const [serverError, setServerError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touched, setTouched] = useState({
+    studentName: false,
+    studentId: false
+  });
   
+  // Prepare team members for dropdown 
+  const responsiblePersonOptions = teamMembers.map(member => ({
+    value: member.id,
+    label: member.name
+  }));
+
   // Form data state
   const [formData, setFormData] = useState({
     studentName: '',
@@ -52,16 +62,10 @@ const FollowupForm = ({
   
   // Form errors state
   const [formErrors, setFormErrors] = useState({});
-  
-  // Prepare team members for dropdown - do this early
-  const responsiblePersonOptions = teamMembers.map(member => ({
-    value: member.id,
-    label: member.name
-  }));
 
-  // When team members load, if there's only one, auto-select it
+  // When team members load, auto-select first
   useEffect(() => {
-    if (teamMembers.length === 1 && !formData.responsiblePerson && !followupToView) {
+    if (teamMembers.length >= 1 && !formData.responsiblePerson && !followupToView) {
       setFormData(prev => ({
         ...prev,
         responsiblePerson: teamMembers[0].id
@@ -78,27 +82,16 @@ const FollowupForm = ({
     }
   }, [teamMembers, formData.responsiblePerson, followupToView, formErrors]);
 
-  // Use pre-selected student if available
-  useEffect(() => {
-    if (selectedStudent && !followupToView) {
-      setFormData(prev => ({
-        ...prev,
-        studentName: selectedStudent.name || '',
-        studentId: selectedStudent.id || ''
-      }));
-      setValidStudent(true);
-      clearSelectedStudent();
-    }
-  }, [selectedStudent, clearSelectedStudent, followupToView]);
+  const studentWasPrefilled = useRef(false);
 
-  // Update form when followupToView changes
   useEffect(() => {
+    // Case 1: We have a followup to view
     if (followupToView) {
       setFormData({
         studentName: followupToView.student_name || '',
         studentId: followupToView.student_id || '',
         type: followupToView.type || FOLLOWUP_TYPES[0].value,
-        responsiblePerson: followupToView.responsible_person || '',
+        responsiblePerson: followupToView.responsible_person || responsiblePersonOptions[0].value,
         followupNotes: followupToView.followup_notes || '',
         intervention: followupToView.intervention || '',
         metric: followupToView.metric || '',
@@ -109,22 +102,48 @@ const FollowupForm = ({
       setIsEditMode(editMode);
       setValidStudent(true);
       
-      // Clear validation errors when viewing existing followup
-      setFormErrors({});
-    } else {
-      setViewMode(false);
-      setIsEditMode(false);
-      if (!selectedStudent) {
+      // Reset our flag since we're viewing a followup
+      studentWasPrefilled.current = false;
+    }
+    // Case 2: We have a selectedStudent from context
+    else if (selectedStudent) {
+      
+      setFormData(prev => ({
+        ...prev,
+        studentName: selectedStudent.name || '',
+        studentId: selectedStudent.id || ''
+      }));
+      
+      setValidStudent(true);
+      
+      // Set our flag to remember we prefilled a student
+      studentWasPrefilled.current = true;
+      
+      // Clear the selected student
+      clearSelectedStudent();
+    }
+    // Case 3: No followup to view or selected student - reset the form
+    else {
+      // Only reset if we didn't just prefill from a student
+      if (!studentWasPrefilled.current) {
+        setViewMode(false);
+        setIsEditMode(false);
         setValidStudent(false);
       }
     }
-  }, [followupToView, editMode, selectedStudent]);
+  }, [followupToView, selectedStudent, editMode, clearSelectedStudent]);
 
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
+    // Mark field as touched when user interacts with it
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
+
     // Clear errors for this field when value changes
     if (formErrors[name]) {
       setFormErrors(prev => {
@@ -172,7 +191,7 @@ const FollowupForm = ({
       errors.type = 'Type is required';
     }
     
-    if (!data.responsiblePerson && data.responsiblePerson !== 0) {
+    if (!data.responsiblePerson) {
       errors.responsiblePerson = 'Responsible person is required';
     }
     
@@ -207,13 +226,14 @@ const FollowupForm = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Check if we have a valid student
-    if (!validStudent && !isEditMode) {
+    // Check if we have a studentId, which is the most reliable indicator
+    if (!formData.studentId && !isEditMode) {
+      console.log('Form submission failed - no studentId', formData);
       setServerError('Please select a valid student from the suggestions');
       return;
     }
     
-    // Validate form data
+    // Validate form data (continue with your existing validation)
     const errors = validateForm(formData);
     setFormErrors(errors);
     
@@ -259,7 +279,7 @@ const FollowupForm = ({
             studentName: '',
             studentId: '',
             type: FOLLOWUP_TYPES[3].value, // 'Test'
-            responsiblePerson: '',
+            responsiblePerson: responsiblePersonOptions[0].value,
             followupNotes: '',
             intervention: '',
             metric: '',
@@ -291,7 +311,7 @@ const FollowupForm = ({
       studentName: '',
       studentId: '',
       type: FOLLOWUP_TYPES[3].value, // 'Test'
-      responsiblePerson: '',
+      responsiblePerson: responsiblePersonOptions[0].value,
       followupNotes: '',
       intervention: '',
       metric: '',

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from '../../hooks/useForm';
 import { createValidator, isEmpty } from '../../utils/validation';
 import { useStudentData } from '../../context/StudentDataContext';
@@ -79,7 +79,8 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
     handleBlur,
     handleSubmit,
     resetForm,
-    setFormValues
+    setFormValues,
+    setTouched
   } = useForm(
     // Initial values
     {
@@ -148,23 +149,9 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
     }
   );
 
-  // Use pre-selected student if available (from team dashboard)
+  const studentWasPrefilled = useRef(false);
   useEffect(() => {
-    if (selectedStudent && !incidentToView) {
-      setFormValues(prevData => ({
-        ...prevData,
-        studentName: selectedStudent.name || '',
-        studentId: selectedStudent.id || ''
-      }));
-      setValidStudent(true);
-      
-      // Clear the selected student from context after using it
-      clearSelectedStudent();
-    }
-  }, [selectedStudent, clearSelectedStudent, incidentToView, setFormValues]);
-
-  // Update form when incidentToView changes
-  useEffect(() => {
+    // Case 1: We have an incident to view
     if (incidentToView) {
       setFormValues({
         studentName: incidentToView.student_name || '',
@@ -179,15 +166,45 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
       setViewMode(true);
       setIsEditMode(editMode);
       setValidStudent(true);
-    } else {
-      setViewMode(false);
-      setIsEditMode(false);
-      // Only reset valid student if it's not prefilled from context
-      if (!selectedStudent) {
+      
+      // Reset our flag since we're viewing an incident
+      studentWasPrefilled.current = false;
+    } 
+    // Case 2: We have a selectedStudent from context
+    else if (selectedStudent) {
+      console.log('Prefilling from selectedStudent:', selectedStudent);
+      
+      setFormValues(prevData => ({
+        ...prevData,
+        studentName: selectedStudent.name || '',
+        studentId: selectedStudent.id || ''
+      }));
+      
+      // Set the touched state for these fields
+      setTouched(prev => ({
+        ...prev,
+        studentName: true,
+        studentId: true
+      }));
+      
+      setValidStudent(true);
+      
+      // Set our flag to remember we prefilled a student
+      studentWasPrefilled.current = true;
+      
+      // Clear the selected student
+      clearSelectedStudent();
+    }
+    // Case 3: No incident to view or selected student - reset the form 
+    else {
+      // Only reset the form if we didn't just prefill from a student
+      if (!studentWasPrefilled.current) {
+        setViewMode(false);
+        setIsEditMode(false);
         setValidStudent(false);
       }
     }
-  }, [incidentToView, editMode, setFormValues, selectedStudent]);
+  }, [incidentToView, selectedStudent, editMode, setFormValues, setTouched, clearSelectedStudent, formattedDate, formattedTime]);
 
   // Handle student selection from the dropdown
   const handleStudentSelect = (student) => {
@@ -218,6 +235,24 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
     setViewMode(false);
   };
 
+  const submitForm = (e) => {
+    console.log('FollowupForm submission:', {
+      studentName: values.studentName,
+      studentId: values.studentId,
+      validStudent: validStudent
+    });
+
+    // First ensure we have valid student data regardless of the validStudent flag
+    if (!values.studentId && !isEditMode) {
+      console.log('Form validation failed - missing student information');
+      setServerError('Please select a valid student from the suggestions');
+      return;
+    }
+
+    // Now call the original handleSubmit from useForm
+    handleSubmit(e);
+  };
+
   return (
     <div className="incident-note-form-container">
       {serverError && (
@@ -240,7 +275,7 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
         </div>
       )}
       
-      <Form onSubmit={handleSubmit} className="incident-note-form">
+      <Form onSubmit={submitForm} className="incident-note-form">
         <div className="inline-form-group">
           <label htmlFor="studentName">Student Name:</label>
           <div className="student-search-container">
@@ -384,7 +419,7 @@ const IncidentNoteForm = ({ onSubmit, onEdit, incidentToView, editMode = false, 
                 type="submit" 
                 variant="primary" 
                 isLoading={isSubmitting}
-                disabled={isSubmitting || (!validStudent && !isEditMode)}
+                disabled={isSubmitting || ((!values.studentName || !values.studentId) && !isEditMode)}
               >
                 {isEditMode ? 'Save Changes' : 'Submit'}
               </Button>
