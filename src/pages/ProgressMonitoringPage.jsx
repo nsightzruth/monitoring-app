@@ -43,21 +43,11 @@ const ProgressMonitoringPage = ({ user }) => {
       resetChanges();
     }
   };
-
-  // For debugging - log the entries when they change
-  useEffect(() => {
-    console.log(`Progress entries loaded: ${progressEntries.length} entries`);
-    // Log the first few entries to see their structure
-    if (progressEntries.length > 0) {
-      console.log('Sample entries:', progressEntries.slice(0, 2));
-    }
-  }, [progressEntries]);
   
   // Refresh data when the component mounts
   useEffect(() => {
     // Force refresh data when component mounts
     if (user?.id) {
-      console.log('Progress page mounted, refreshing data for staff ID:', user.id);
       fetchProgressEntries();
     }
   }, [fetchProgressEntries, user?.id]);

@@ -12,7 +12,6 @@ export const progressService = {
    */
   getProgressEntries: async (staffId, activeOnly = true) => {
     try {
-      console.log(`Fetching progress entries for staff ID: ${staffId}, activeOnly: ${activeOnly}`);
       
       // Get students from team relationships
       const getTeamStudents = async (staffId) => {
@@ -32,7 +31,6 @@ export const progressService = {
           
           // Extract team IDs
           const teamIds = staffTeams.map(team => team.team_id);
-          console.log('Team IDs:', teamIds);
           
           // Get students in these teams
           const { data: students, error: studentsError } = await supabase
@@ -40,9 +38,7 @@ export const progressService = {
             .select('id, name, grade')
             .in('team_id', teamIds);
             
-          if (studentsError) throw studentsError;
-          
-          console.log(`Found ${students?.length || 0} students from teams`);
+          if (studentsError) throw studentsError;          
           return students || [];
         } catch (error) {
           console.error('Error getting team students:', error);
@@ -59,9 +55,7 @@ export const progressService = {
             .eq('staff_id', staffId);
             
           if (teacherError) throw teacherError;
-          
-          console.log(`Found ${teacherLinks?.length || 0} teacher-student links`);
-          
+                    
           // Extract student data from the relationships
           const students = (teacherLinks || [])
             .filter(link => link.Student) // Filter out any null relations
@@ -93,7 +87,6 @@ export const progressService = {
       });
       
       const uniqueStudents = Object.values(uniqueStudentMap);
-      console.log(`Total unique students: ${uniqueStudents.length}`);
       
       // If no students found, return empty array early
       if (uniqueStudents.length === 0) {
@@ -103,7 +96,6 @@ export const progressService = {
       
       // Get student IDs
       const studentIds = uniqueStudents.map(student => student.id);
-      console.log('Student IDs to look for:', studentIds);
       
       // First get followups of type 'Intervention' for these students
       let followupQuery = supabase
@@ -123,9 +115,7 @@ export const progressService = {
         console.error('Error fetching intervention followups:', followupsError);
         throw followupsError;
       }
-      
-      console.log(`Found ${interventionFollowups?.length || 0} intervention followups`);
-      
+            
       if (!interventionFollowups || interventionFollowups.length === 0) {
         console.log('No intervention followups found');
         return [];
@@ -150,9 +140,7 @@ export const progressService = {
         console.error('Error fetching progress entries:', progressError);
         throw progressError;
       }
-      
-      console.log(`Found ${progressEntries?.length || 0} progress entries`);
-      
+            
       // Format the data to include student and followup information
       const formattedData = (progressEntries || []).map(entry => ({
         id: entry.id,
@@ -249,9 +237,7 @@ function generateDateRange(startDate, endDate) {
   // Use UTC dates to avoid timezone issues
   start.setUTCHours(0, 0, 0, 0);
   end.setUTCHours(0, 0, 0, 0);
-  
-  console.log(`Generating dates from ${startDate} to ${endDate}`);
-  
+    
   // Create current date and iterate through range
   let current = new Date(start);
   while (current <= end) {

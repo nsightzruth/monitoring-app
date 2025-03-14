@@ -24,24 +24,21 @@ const ProgressMonitoringTable = ({
   // Calculate organized data based on grouping preference
   const organizedData = useMemo(() => {
     if (!entries || entries.length === 0) {
-      console.log('No entries to organize');
       return [];
     }
-    
-    console.log(`Organizing ${entries.length} entries, groupByStudent=${groupByStudent}`);
-    
+        
     // Get today's date as a string in YYYY-MM-DD format
-    const todayString = new Date().toISOString().split('T')[0];
-    console.log('Today is:', todayString);
+    const today = new Date();
+    const todayString = today.getFullYear() + '-' + 
+      String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(today.getDate()).padStart(2, '0');
     
     // Filter to show only today or earlier dates using string comparison
     const filteredEntries = entries.filter(entry => {
       // Compare date strings (YYYY-MM-DD format) to avoid time zone issues
       return entry.date && entry.date <= todayString;
     });
-    
-    console.log(`Filtered to ${filteredEntries.length} entries (today or earlier)`);
-    
+        
     if (groupByStudent) {
       // Group entries by student
       const studentGroups = {};
