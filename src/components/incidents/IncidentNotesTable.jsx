@@ -73,7 +73,7 @@ const IncidentNotesTable = ({ records, onView, onEdit, loading }) => {
     {
       key: 'notes',
       title: 'Notes',
-      width: '50%',
+      // width: '50%',
       render: (item) => formatNotes(item)
     },
     {

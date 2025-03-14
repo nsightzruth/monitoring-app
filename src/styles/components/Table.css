@@ -4,6 +4,7 @@
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   position: relative;
+  max-width: 100%;
   z-index: 1;
 }
   
@@ -30,17 +31,14 @@
   z-index: 5;
 }
 
-/* FIXED: Add proper positioning context to table rows */  
 .table tr {
   position: relative;
 }
 
-/* FIXED: Last table row shouldn't have a bottom border */
 .table tr:last-child td {
   border-bottom: none;
 }
 
-/* FIXED: Add hover effect without affecting z-index stacking */  
 .table tr:hover {
   background-color: #f9fafb;
 }
