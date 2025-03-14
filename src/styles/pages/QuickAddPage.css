@@ -1,0 +1,243 @@
+.quick-add-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quick-add-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.quick-add-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--secondary-color);
+}
+
+.quick-add-date {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+.quick-add-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.button-row {
+  display: flex;
+  width: 100%;
+  position: relative;
+}
+
+.quick-add-button {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1rem;
+  flex-grow: 9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  text-align: left;
+}
+
+/* Color variations */
+.quick-add-button.color-1 {
+  background-color: var(--primary-color); /* Dark blue */
+}
+
+.quick-add-button.color-2 {
+  background-color: var(--secondary-color); /* Teal */
+}
+
+.quick-add-button.color-3 {
+  background-color: var(--tertiary-color); /* Light teal */
+}
+
+.quick-add-button.color-4 {
+  background-color: #F44336; /* Red */
+}
+
+.quick-add-button:hover {
+  filter: brightness(1.1);
+}
+
+.quick-add-button:active {
+  transform: scale(0.98);
+}
+
+.quick-add-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.student-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-name-quick {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.student-details {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.metric-name {
+  max-width: 150px;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.value-display {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  justify-content: center;
+}
+
+.value-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* Decrement button */
+.decrement-button {
+  position: relative;
+  right: -12px;
+  top: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background-color: orange;
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+  transition: background-color 0.2s;
+  padding: 0px;
+}
+
+.decrement-button:hover {
+  background-color: #f8f8f8;
+}
+
+.decrement-button:active {
+  background-color: #eaeaea;
+}
+
+.decrement-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: #f0f0f0;
+}
+
+.no-entries-message {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 1.5rem;
+  text-align: center;
+  color: #6c757d;
+}
+
+.no-entries-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.no-entries-info {
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.no-entries-steps {
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.loading-spinner {
+  animation: spin 1.5s linear infinite;
+  width: 50px;
+  height: 50px;
+  color: var(--secondary-color);
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Success animation */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.button-success {
+  animation: pulse 0.4s ease-in-out;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .quick-add-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .quick-add-container {
+    padding: 0 0.5rem;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .student-grade-quick {
+    display: none;
+  }
+}

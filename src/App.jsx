@@ -8,6 +8,7 @@ import TeamDashboard from './pages/TeamDashboard';
 import IncidentNotePage from './pages/IncidentNotePage';
 import FollowupPage from './pages/FollowupPage';
 import ProgressMonitoringPage from './pages/ProgressMonitoringPage';
+import QuickAddPage from './pages/QuickAddPage';
 import Navigation from './components/layout/Navigation';
 import './styles/App.css';
 
@@ -81,8 +82,10 @@ function App() {
       case 'progress':
         return <ProgressMonitoringPage user={user} />;
       case 'referrals':
-      default:
         return <ReferralPage user={user} />;
+      case 'quickAdd': 
+      default:
+        return <QuickAddPage user={user} />;
     }
   };
 

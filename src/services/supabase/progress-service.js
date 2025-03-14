@@ -167,6 +167,49 @@ export const progressService = {
   },
 
   /**
+   * Create progress entries for a new intervention followup
+   * @param {Object} followup - Followup data
+   * @param {string} staffId - Staff ID creating the entries
+   * @returns {Promise<Array>} - Array of created progress entries
+   */
+  createProgressEntries: async (followup, staffId) => {
+    try {
+      // Only create progress entries for followups of type 'Intervention'
+      if (followup.type !== 'Intervention' || !followup.start_date || !followup.end_date) {
+        return { success: false, message: 'Not an intervention followup or missing dates' };
+      }
+      
+      // Generate an array of dates between start_date and end_date (inclusive)
+      const dates = generateDateRange(followup.start_date, followup.end_date);
+      
+      // Create a progress entry for each date
+      const entries = dates.map(date => ({
+        date,
+        applied: false,
+        value: null,
+        student_id: followup.student_id,
+        staff_id: staffId,
+        followup_id: followup.id,
+        created_at: new Date(),
+        updated_at: new Date()
+      }));
+      
+      // Insert all entries at once
+      const { data, error } = await supabase
+        .from('Progress')
+        .insert(entries)
+        .select();
+        
+      if (error) throw error;
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error creating progress entries:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
    * Update progress entries
    * @param {Array} updates - Array of objects with id and updates
    * @returns {Promise<Object>} - Result of the operation

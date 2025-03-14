@@ -7,6 +7,7 @@ import { incidentService } from './incident-service';
 import { adminService } from './admin-service';
 import { followupService } from './followup-service';
 import { progressService } from './progress-service';
+import { quickAddService } from './quick-add-service';
 
 // Export all services
 export {
@@ -18,5 +19,6 @@ export {
   incidentService,
   adminService,
   followupService,
-  progressService
+  progressService,
+  quickAddService
 };
