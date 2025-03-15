@@ -11,8 +11,10 @@ export const quickAddService = {
    */
   getTodayProgressEntries: async (staffId) => {
     try {
-      // Get today's date in YYYY-MM-DD format
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date();
+      const todayString = today.getFullYear() + '-' + 
+        String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(today.getDate()).padStart(2, '0');
       
       // Get students from team relationships and teacher-student relationships
       const students = await getRelatedStudents(staffId);
@@ -45,8 +47,8 @@ export const quickAddService = {
       const activeFollowups = interventionFollowups.filter(followup => {
         return followup.start_date && 
                followup.end_date && 
-               followup.start_date <= today && 
-               today <= followup.end_date;
+               followup.start_date <= todayString && 
+               todayString <= followup.end_date;
       });
       
       if (activeFollowups.length === 0) {
@@ -66,7 +68,7 @@ export const quickAddService = {
           Followup:followup_id (intervention, metric)
         `)
         .in('followup_id', followupIds)
-        .eq('date', today);
+        .eq('date', todayString);
         
       if (progressError) {
         throw progressError;
